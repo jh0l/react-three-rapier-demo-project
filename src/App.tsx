@@ -2,7 +2,6 @@ import {
     Box,
     Environment,
     OrbitControls,
-    OrthographicCamera,
     PerspectiveCamera,
 } from '@react-three/drei';
 import {Canvas} from '@react-three/fiber';
@@ -16,31 +15,8 @@ import {
     useState,
     StrictMode,
 } from 'react';
-import {NavLink, NavLinkProps, Route, Routes} from 'react-router-dom';
-import {AllCollidersExample} from './examples/all-colliders/AllCollidersExample';
-import {AllShapesExample} from './examples/all-shapes/AllShapesExample';
-import {ApiUsage} from './examples/api-usage/ApiUsageExample';
-import {AttractorExample} from './examples/attractors/AttractorsExample';
+
 import {Car} from './examples/car/CarExample';
-import {Cluster} from './examples/cluster/ClusterExample';
-import {Colliders} from './examples/colliders/CollidersExample';
-import {CollisionEventsExample} from './examples/collision-events/CollisionEventsExample';
-import {ComponentsExample} from './examples/components/ComponentsExample';
-import {ContactForceEventsExample} from './examples/contact-force-events/ContactForceEventsExample';
-import {CradleExample} from './examples/cradle/CradleExample';
-import {Damping} from './examples/damping/DampingExample';
-import {InstancedMeshes} from './examples/instanced-meshes/InstancedMeshesExample';
-import {InstancedMeshesCompound} from './examples/instances-meshes-compound/InstancedMeshesCompoundExample';
-import {Joints} from './examples/joints/JointsExample';
-import {Kinematics} from './examples/kinematics/KinematicsExample';
-import {ManualStepExample} from './examples/manual-step/ManualStepExamples';
-import {MeshColliderTest} from './examples/mesh-collider-test/MeshColliderExample';
-import {SensorsExample} from './examples/sensors/SensorsExample';
-import Shapes from './examples/plinko/ShapesExample';
-import {Transforms} from './examples/transforms/TransformsExample';
-import {LockedTransformsExample} from './examples/locked-transforms/LockedTransformsExample';
-import {PerformanceExample} from './examples/performance/PeformanceExample';
-import {DynamicTypeChangeExample} from './examples/dynamic-type-change/DynamicTypeChangeExample';
 
 const demoContext = createContext<{
     setDebug?(f: boolean): void;
@@ -186,22 +162,5 @@ export const App = () => {
                 />
             </div>
         </div>
-    );
-};
-
-const Link = (props: NavLinkProps) => {
-    return (
-        <NavLink
-            {...props}
-            style={({isActive}) => ({
-                border: '2px solid blue',
-                textTransform: 'capitalize',
-                borderRadius: 4,
-                padding: 4,
-                background: isActive ? 'blue' : 'transparent',
-                textDecoration: 'none',
-                color: isActive ? 'white' : 'blue',
-            })}
-        />
     );
 };
