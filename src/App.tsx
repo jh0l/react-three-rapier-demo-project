@@ -41,7 +41,6 @@ import {Transforms} from './examples/transforms/TransformsExample';
 import {LockedTransformsExample} from './examples/locked-transforms/LockedTransformsExample';
 import {PerformanceExample} from './examples/performance/PeformanceExample';
 import {DynamicTypeChangeExample} from './examples/dynamic-type-change/DynamicTypeChangeExample';
-import {Camera} from 'three';
 
 const demoContext = createContext<{
     setDebug?(f: boolean): void;
@@ -90,33 +89,6 @@ const Floor = () => {
             </Box>
         </RigidBody>
     );
-};
-
-const routes: Record<string, ReactNode> = {
-    '': <Shapes />,
-    joints: <Joints />,
-    components: <ComponentsExample />,
-    cradle: <CradleExample />,
-    transforms: <Transforms />,
-    cluster: <Cluster />,
-    'all-shapes': <AllShapesExample />,
-    attractors: <AttractorExample />,
-    car: <Car />,
-    'api-usage': <ApiUsage />,
-    kinematics: <Kinematics />,
-    'mesh-collider-test': <MeshColliderTest />,
-    colliders: <Colliders />,
-    'instanced-meshes': <InstancedMeshes />,
-    damping: <Damping />,
-    'instanced-meshes-compound': <InstancedMeshesCompound />,
-    'all-colliders': <AllCollidersExample />,
-    'collision-events': <CollisionEventsExample />,
-    'contact-force-events': <ContactForceEventsExample />,
-    sensors: <SensorsExample />,
-    'manual-step': <ManualStepExample />,
-    'locked-transforms': <LockedTransformsExample />,
-    performance: <PerformanceExample />,
-    'dynamic-type-changes': <DynamicTypeChangeExample />,
 };
 
 export const App = () => {
@@ -169,17 +141,7 @@ export const App = () => {
                                     setCameraEnabled,
                                 }}
                             >
-                                <Routes>
-                                    {Object.keys(routes).map(
-                                        (key, index, array) => (
-                                            <Route
-                                                path={key}
-                                                key={key}
-                                                element={routes[key]}
-                                            />
-                                        )
-                                    )}
-                                </Routes>
+                                <Car />
                             </demoContext.Provider>
 
                             <Floor />
@@ -202,12 +164,6 @@ export const App = () => {
                     maxWidth: 600,
                 }}
             >
-                {/* {Object.keys(routes).map((key) => (
-                    <Link key={key} to={key} end>
-                        {key.replace(/-/g, ' ') || 'Plinko'}
-                    </Link>
-                ))} */}
-
                 <ToggleButton
                     label="Debug"
                     value={debug}
