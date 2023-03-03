@@ -62,19 +62,25 @@ export const Car: Demo = () => {
         [3, 0, 3],
         [3, 0, -3],
     ];
+    const locBoxRef = useRef<THREE.Mesh>(null);
     const wheelRefs = useRef(
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
     const boxColorRef = useRef<MeshStandardMaterial>(null);
     const [compRef, imageRef, intersectionRef] = useHookmaMap();
     useFrame(() => {
-        if (!boxColorRef.current || intersectionRef.current?.color) return;
+        if (!boxColorRef.current || !intersectionRef.current?.color) return;
         const [r, g, b] = intersectionRef.current.color;
         boxColorRef.current.color.setRGB(r, g, b);
+        if (intersectionRef.current?.intersections.length) {
+            const { point } = intersectionRef.current.intersections[0];
+            locBoxRef.current?.position.set(point.x, 1, point.z);
+        }
     });
     return (
         <>
-            <group position={[-38, -9, 10]} rotation={[0, -Math.PI / 1.5, 0]}>
+            <Box ref={locBoxRef} />
+            <group position={[-38, -3, 10]} rotation={[0, -Math.PI / 1.5, 0]}>
                 <RigidBody
                     colliders="cuboid"
                     ref={bodyRef}
@@ -137,7 +143,7 @@ const Map = forwardRef<any>((_, ref) => {
             position={[0, -7.1, 0]}
             scale={[MAP_SCALE * MAP_ASP, MAP_SCALE]}
             rotation={[-Math.PI / 2, 0, 0]}
-            url="assets/map.png"
+            url="map.png"
         />
     );
 });
@@ -152,7 +158,7 @@ const Map = forwardRef<any>((_, ref) => {
 //                 position={[0, -7.1, 0]}
 //                 scale={[MAP_SCALE * MAP_ASP, MAP_SCALE]}
 //                 rotation={[-Math.PI / 2, 0, 0]}
-//                 url="assets/car-city.jpeg"
+//                 url="car-city.jpeg"
 //             />
 //         </>
 //     );
