@@ -1,14 +1,16 @@
-import {Box, Cylinder, Image} from '@react-three/drei';
-import {useFrame} from '@react-three/fiber';
+import { Box, Cylinder, Image } from "@react-three/drei";
+import { useFrame } from "@react-three/fiber";
 import {
     RapierRigidBody,
     RigidBody,
     useRevoluteJoint,
     Vector3Array,
-} from '@react-three/rapier';
-import {createRef, RefObject, useRef} from 'react';
-import {Demo} from '../../App';
-import {KeyMapType, useControls} from './utils/useControls';
+} from "@react-three/rapier";
+import { createRef, forwardRef, RefObject, useRef } from "react";
+import { Demo } from "../../App";
+import { KeyMapType, useControls } from "./utils/useControls";
+import { useHookmaMap } from "./utils/useHookmaMap";
+import { Color, MeshStandardMaterial } from "three";
 
 const WHEEL_VEL = 30;
 const WHEEL_FAC = 20;
@@ -35,14 +37,14 @@ const WheelJoint = ({
 
     useFrame(() => {
         if (joint.current) {
-            if (controls['forward']) {
+            if (controls["forward"]) {
                 joint.current.configureMotorVelocity(WHEEL_VEL, WHEEL_FAC);
-            } else if (controls['backward']) {
+            } else if (controls["backward"]) {
                 joint.current.configureMotorVelocity(-WHEEL_VEL, WHEEL_FAC);
             } else {
                 joint.current.configureMotorVelocity(0, WHEEL_FAC * 10);
             }
-            if (controls['left']) {
+            if (controls["left"]) {
                 joint.current.configureMotorVelocity(-WHEEL_VEL, WHEEL_FAC);
             }
         }
@@ -63,10 +65,16 @@ export const Car: Demo = () => {
     const wheelRefs = useRef(
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
-
+    const boxColorRef = useRef<MeshStandardMaterial>(null);
+    const [compRef, imageRef, intersectionRef] = useHookmaMap();
+    useFrame(() => {
+        if (!boxColorRef.current || intersectionRef.current?.color) return;
+        const [r, g, b] = intersectionRef.current.color;
+        boxColorRef.current.color.setRGB(r, g, b);
+    });
     return (
         <>
-            <group position={[-38, -5, 10]} rotation={[0, -Math.PI / 1.5, 0]}>
+            <group position={[-38, -9, 10]} rotation={[0, -Math.PI / 1.5, 0]}>
                 <RigidBody
                     colliders="cuboid"
                     ref={bodyRef}
@@ -79,8 +87,9 @@ export const Car: Demo = () => {
                         castShadow
                         receiveShadow
                         name="chassis"
+                        ref={compRef}
                     >
-                        <meshStandardMaterial color={'red'} />
+                        <meshStandardMaterial color={"red"} ref={boxColorRef} />
                     </Box>
                 </RigidBody>
                 {wheelPositions.map((wheelPosition, index) => (
@@ -98,7 +107,7 @@ export const Car: Demo = () => {
                             castShadow
                             receiveShadow
                         >
-                            <meshStandardMaterial color={'grey'} />
+                            <meshStandardMaterial color={"grey"} />
                         </Cylinder>
                     </RigidBody>
                 ))}
@@ -114,23 +123,24 @@ export const Car: Demo = () => {
                     />
                 ))}
             </group>
-            <Map />
+            <Map ref={imageRef} />
         </>
     );
 };
 
 const MAP_SCALE = 55;
 const MAP_ASP = 1.75;
-function Map() {
+const Map = forwardRef<any>((_, ref) => {
     return (
         <Image
+            ref={ref}
             position={[0, -7.1, 0]}
             scale={[MAP_SCALE * MAP_ASP, MAP_SCALE]}
             rotation={[-Math.PI / 2, 0, 0]}
             url="assets/map.png"
         />
     );
-}
+});
 
 // car city carpet 😎
 // const MAP_SCALE = 100;
