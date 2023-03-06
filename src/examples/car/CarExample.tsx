@@ -8,12 +8,11 @@ import {
 } from "@react-three/rapier";
 import { createRef, forwardRef, RefObject, useRef } from "react";
 import { Demo } from "../../App";
-import { KeyMapType, useControls } from "./utils/useControls";
+import { ControlRes, useControls } from "./utils/useControls";
 import { useHookmaMap } from "./utils/useHookmaMap";
-import { Color, MeshStandardMaterial } from "three";
 
-const WHEEL_VEL = 30;
-const WHEEL_FAC = 20;
+const WHEEL_VEL = 15;
+const WHEEL_FAC = 100;
 const WheelJoint = ({
     body,
     wheel,
@@ -21,13 +20,15 @@ const WheelJoint = ({
     wheelAnchor,
     rotationAxis,
     controls,
+    side,
 }: {
     body: RefObject<RapierRigidBody>;
     wheel: RefObject<RapierRigidBody>;
     bodyAnchor: Vector3Array;
     wheelAnchor: Vector3Array;
     rotationAxis: Vector3Array;
-    controls: KeyMapType<boolean>;
+    controls: RefObject<ControlRes>;
+    side: "left" | "right";
 }) => {
     const joint = useRevoluteJoint(body, wheel, [
         bodyAnchor,
@@ -36,17 +37,11 @@ const WheelJoint = ({
     ]);
 
     useFrame(() => {
-        if (joint.current) {
-            if (controls["forward"]) {
-                joint.current.configureMotorVelocity(WHEEL_VEL, WHEEL_FAC);
-            } else if (controls["backward"]) {
-                joint.current.configureMotorVelocity(-WHEEL_VEL, WHEEL_FAC);
-            } else {
-                joint.current.configureMotorVelocity(0, WHEEL_FAC * 10);
-            }
-            if (controls["left"]) {
-                joint.current.configureMotorVelocity(-WHEEL_VEL, WHEEL_FAC);
-            }
+        if (joint.current && controls.current) {
+            joint.current.configureMotorVelocity(
+                controls.current[side] * WHEEL_VEL,
+                WHEEL_FAC
+            );
         }
     });
 
@@ -55,32 +50,51 @@ const WheelJoint = ({
 
 export const Car: Demo = () => {
     const bodyRef = useRef<RapierRigidBody>(null);
-    const kb = useControls();
     const wheelPositions: [number, number, number][] = [
-        // [-3, 0, 2],
-        // [-3, 0, -2],
-        [3, 0, 3],
-        [3, 0, -3],
+        [3, -1, 3],
+        [3, -1, -3],
     ];
-    const locBoxRef = useRef<THREE.Mesh>(null);
+    const indexSides = ["left", "right"] as const;
+    const floatyBoxRef = useRef<THREE.Mesh>(null);
     const wheelRefs = useRef(
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
-    const boxColorRef = useRef<MeshStandardMaterial>(null);
-    const [compRef, imageRef, intersectionRef] = useHookmaMap();
+    const floatBoxColorRef = useRef<any>(null);
+    const [compRef, imageRef, interRef] = useHookmaMap();
+    const kb = useControls(interRef.current);
     useFrame(() => {
-        if (!boxColorRef.current || !intersectionRef.current?.color) return;
-        const [r, g, b] = intersectionRef.current.color;
-        boxColorRef.current.color.setRGB(r, g, b);
-        if (intersectionRef.current?.intersections.length) {
-            const { point } = intersectionRef.current.intersections[0];
-            locBoxRef.current?.position.set(point.x, 1, point.z);
+        if (!floatBoxColorRef.current || !interRef.current?.color) return;
+        const [r, g, b] = interRef.current.color;
+        if (
+            interRef.current?.inters.length &&
+            bodyRef.current &&
+            floatyBoxRef.current
+        ) {
+            const { point } = interRef.current.inters[0];
+            floatyBoxRef.current?.position.set(point.x, -3, point.z);
+            // const { x, y, z, w } = bodyRef.current.rotation();
+            floatyBoxRef.current.setRotationFromQuaternion(
+                //@ts-ignore
+                bodyRef.current.nextRotation()
+            );
+            floatBoxColorRef.current?.color.setRGB(r / 255, g / 255, b / 255);
+            if (kb.current?.sample) {
+                console.log(r, g, b);
+                console.log(interRef.current.color);
+            }
         }
     });
     return (
         <>
-            <Box ref={locBoxRef} />
-            <group position={[-38, -3, 10]} rotation={[0, -Math.PI / 1.5, 0]}>
+            <Box ref={floatyBoxRef}>
+                <meshPhysicalMaterial
+                    color={"red"}
+                    metalness={1}
+                    reflectivity={0}
+                    ref={floatBoxColorRef}
+                />
+            </Box>
+            <group position={[-70, -3, 20]} rotation={[0, -Math.PI / 1.5, 0]}>
                 <RigidBody
                     colliders="cuboid"
                     ref={bodyRef}
@@ -89,13 +103,13 @@ export const Car: Demo = () => {
                     friction={0}
                 >
                     <Box
-                        scale={[6, 1, 4]}
+                        scale={[6.5, 1, 4]}
                         castShadow
                         receiveShadow
                         name="chassis"
                         ref={compRef}
                     >
-                        <meshStandardMaterial color={"red"} ref={boxColorRef} />
+                        <meshStandardMaterial color={"red"} />
                     </Box>
                 </RigidBody>
                 {wheelPositions.map((wheelPosition, index) => (
@@ -105,7 +119,7 @@ export const Car: Demo = () => {
                         type="dynamic"
                         key={index}
                         ref={wheelRefs.current[index]}
-                        friction={1}
+                        friction={2}
                     >
                         <Cylinder
                             rotation={[Math.PI / 2, 0, 0]}
@@ -125,25 +139,26 @@ export const Car: Demo = () => {
                         bodyAnchor={wheelPosition}
                         wheelAnchor={[0, 0, 0]}
                         rotationAxis={[0, 0, 1]}
-                        controls={kb.current}
+                        controls={kb}
+                        side={indexSides[index]}
                     />
                 ))}
             </group>
-            <Map ref={imageRef} />
+            <Map ref={imageRef} map_url="map.png" />
         </>
     );
 };
 
-const MAP_SCALE = 55;
+const MAP_SCALE = 100;
 const MAP_ASP = 1.75;
-const Map = forwardRef<any>((_, ref) => {
+const Map = forwardRef<any, { map_url: string }>(({ map_url }, ref) => {
     return (
         <Image
             ref={ref}
             position={[0, -7.1, 0]}
             scale={[MAP_SCALE * MAP_ASP, MAP_SCALE]}
             rotation={[-Math.PI / 2, 0, 0]}
-            url="map.png"
+            url={map_url}
         />
     );
 });

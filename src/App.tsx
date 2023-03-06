@@ -3,10 +3,10 @@ import {
     Environment,
     OrbitControls,
     PerspectiveCamera,
-} from '@react-three/drei';
-import {Canvas} from '@react-three/fiber';
-import {Debug, Physics, RigidBody} from '@react-three/rapier';
-import {Perf} from 'r3f-perf';
+} from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Debug, Physics, RigidBody } from "@react-three/rapier";
+import { Perf } from "r3f-perf";
 import {
     createContext,
     ReactNode,
@@ -14,9 +14,9 @@ import {
     useContext,
     useState,
     StrictMode,
-} from 'react';
+} from "react";
 
-import {Car} from './examples/car/CarExample';
+import { Car } from "./examples/car/CarExample";
 
 const demoContext = createContext<{
     setDebug?(f: boolean): void;
@@ -37,9 +37,9 @@ const ToggleButton = ({
 }) => (
     <button
         style={{
-            background: value ? 'red' : 'transparent',
-            border: '2px solid red',
-            color: value ? 'white' : 'red',
+            background: value ? "red" : "transparent",
+            border: "2px solid red",
+            color: value ? "white" : "red",
             borderRadius: 4,
         }}
         onClick={onClick}
@@ -49,7 +49,7 @@ const ToggleButton = ({
 );
 
 export interface Demo {
-    (props: {children?: ReactNode}): JSX.Element;
+    (props: { children?: ReactNode }): JSX.Element;
 }
 
 const Floor = () => {
@@ -81,20 +81,20 @@ export const App = () => {
     return (
         <div
             style={{
-                position: 'fixed',
+                position: "fixed",
                 inset: 0,
-                background: 'linear-gradient(blue, white)',
-                fontFamily: 'sans-serif',
+                background: "linear-gradient(blue, white)",
+                fontFamily: "sans-serif",
             }}
         >
             <Suspense fallback="Loading...">
                 <Canvas shadows>
-                    <PerspectiveCamera position={[0, 70, 0]} makeDefault />
+                    <PerspectiveCamera position={[0, 120, 0]} makeDefault />
                     <StrictMode>
                         <Physics
                             paused={paused}
                             key={physicsKey}
-                            gravity={[0, -200, 0]}
+                            gravity={[0, -250, 0]}
                         >
                             <directionalLight
                                 castShadow
@@ -131,11 +131,11 @@ export const App = () => {
 
             <div
                 style={{
-                    position: 'absolute',
+                    position: "absolute",
                     bottom: 24,
                     left: 24,
-                    display: 'flex',
-                    flexWrap: 'wrap',
+                    display: "flex",
+                    flexWrap: "wrap",
                     gap: 12,
                     maxWidth: 600,
                 }}
