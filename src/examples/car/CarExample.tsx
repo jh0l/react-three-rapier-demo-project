@@ -11,7 +11,7 @@ import { Demo } from "../../App";
 import { ControlRes, useControls } from "./utils/useControls";
 import { useHookmaMap } from "./utils/useHookmaMap";
 
-const WHEEL_VEL = 15;
+const WHEEL_VEL = 10;
 const WHEEL_FAC = 100;
 const WheelJoint = ({
     body,
@@ -149,7 +149,7 @@ export const Car: Demo = () => {
     );
 };
 
-const MAP_SCALE = 100;
+const MAP_SCALE = 55;
 const MAP_ASP = 1.75;
 const Map = forwardRef<any, { map_url: string }>(({ map_url }, ref) => {
     return (

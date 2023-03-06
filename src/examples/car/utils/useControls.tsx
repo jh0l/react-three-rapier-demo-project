@@ -77,12 +77,10 @@ function useKeyboard(res: RefObject<ControlRes>) {
                 res.current.auto = !res.current.auto;
             }
             res.current.sample = sample;
-            console.log(res.current);
         }
     });
 }
 const THRESHOLD = 50;
-const PROPORTIONAL_GAIN = 2;
 export function useControls(interRef?: IntersectionRef) {
     const res = useRef<ControlRes>({
         left: 0,
@@ -96,18 +94,14 @@ export function useControls(interRef?: IntersectionRef) {
         // use color to control car - black means turn right, white means turn left
         const [r, g, b] = interRef.color;
         const reflect = ((r + g + b) / 3 / 255) * 100;
-        const turn = (reflect - THRESHOLD) / 100;
+        const deviation = (reflect - THRESHOLD) / 100;
+        const turn = deviation * PROPORTIONAL_GAIN;
         console.log(turn);
-        // calculate rate of turning based turn value:
-        //      -1 means left wheel is full speed reverse, right wheel is full speed forward
-        //      -0.5 means left wheel is full speed reverse, right wheel is stopped
-        //      0 means both wheels are full speed forward
-        //      0.5 means left wheel is stopped, right wheel is full speed forward
-        //      1 means left wheel is full speed forward, right wheel is full speed reverse
-        res.current.left = 1 - turn;
-        res.current.right = 1 + turn;
+        res.current.left = -turn + 1;
+        res.current.right = turn + 1;
         console.log(res.current);
     });
 
     return res;
 }
+const PROPORTIONAL_GAIN = 1.6;
