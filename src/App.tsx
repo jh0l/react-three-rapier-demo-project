@@ -89,7 +89,7 @@ export const App = () => {
         >
             <Suspense fallback="Loading...">
                 <Canvas shadows>
-                    <PerspectiveCamera position={[0, 120, 0]} makeDefault />
+                    <PerspectiveCamera position={[0, 70, 0]} makeDefault />
                     <StrictMode>
                         <Physics
                             paused={paused}

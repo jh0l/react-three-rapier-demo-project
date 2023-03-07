@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useRef } from "react";
-import { IntersectionRef } from "./useHookmaMap";
+import { CanvasRef } from "./useHookmaMap";
 import { useFrame } from "@react-three/fiber";
 
 export function useKeyPresses(event: (key: string, b: boolean) => void) {
@@ -81,7 +81,7 @@ function useKeyboard(res: RefObject<ControlRes>) {
     });
 }
 const THRESHOLD = 50;
-export function useControls(interRef?: IntersectionRef) {
+export function useControls(interRef?: CanvasRef) {
     const res = useRef<ControlRes>({
         left: 0,
         right: 0,
@@ -92,14 +92,14 @@ export function useControls(interRef?: IntersectionRef) {
     useFrame(() => {
         if (!res.current.auto || !interRef?.color) return;
         // use color to control car - black means turn right, white means turn left
-        const [r, g, b] = interRef.color;
-        const reflect = ((r + g + b) / 3 / 255) * 100;
-        const deviation = (reflect - THRESHOLD) / 100;
-        const turn = deviation * PROPORTIONAL_GAIN;
-        console.log(turn);
-        res.current.left = -turn + 1;
-        res.current.right = turn + 1;
-        console.log(res.current);
+        // const [r, g, b] = interRef.color;
+        // const reflect = ((r + g + b) / 3 / 255) * 100;
+        // const deviation = (reflect - THRESHOLD) / 100;
+        // const turn = deviation * PROPORTIONAL_GAIN;
+        // console.log(turn);
+        // res.current.left = -turn + 1;
+        // res.current.right = turn + 1;
+        // console.log(res.current);
     });
 
     return res;

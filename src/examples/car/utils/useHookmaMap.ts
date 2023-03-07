@@ -1,13 +1,9 @@
 import * as THREE from "three";
-import { useRef } from "react";
+import { RefObject, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-export interface IntersectionRef {
-    inters: THREE.Intersection<THREE.Object3D<THREE.Event>>[];
-    raycaster: THREE.Raycaster;
-    vector: THREE.Vector3;
-    vecma: THREE.Vector3;
+export interface CanvasRef {
     canvas: OffscreenCanvasRenderingContext2D | null;
-    color: number[];
+    color: number[][];
     maps?: {
         x: (x: number) => number;
         y: (y: number) => number;
@@ -26,33 +22,21 @@ function averageRGBAColorArr(arr: Uint8ClampedArray) {
     res[2] = Math.floor(res[2] / (arr.length / 4));
     return res;
 }
-export function useHookmaMap() {
-    const compRef = useRef<THREE.Mesh>(null);
+type FloatyBoxesType = React.MutableRefObject<
+    RefObject<
+        THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>
+    >[]
+>;
+export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
     const imageRef = useRef<THREE.Mesh>(null);
-    const interRef = useRef<IntersectionRef>({
-        inters: [] as THREE.Intersection<THREE.Object3D<THREE.Event>>[],
-        raycaster: new THREE.Raycaster(),
-        vector: new THREE.Vector3(),
-        vecma: new THREE.Vector3(0, -1, 0),
+    const canvasRef = useRef<CanvasRef>({
         canvas: null as null | OffscreenCanvasRenderingContext2D,
         color: [],
     });
-    const handleIntersection = () => {
-        if (compRef.current === null || imageRef.current === null) return;
-        const { raycaster, vector, vecma } = interRef.current;
-        vector.setFromMatrixPosition(compRef.current.matrixWorld);
-        raycaster.set(vector, vecma);
-        // @ts-ignore
-        const intersects = raycaster.intersectObject(imageRef.current);
-        interRef.current.inters = intersects;
-    };
     const getColorAtIntersection = () => {
-        if (imageRef.current === null || interRef.current.inters.length === 0)
-            return null;
+        if (!imageRef.current) return null;
 
-        const { inters } = interRef.current;
-
-        if (interRef.current.canvas === null) {
+        if (canvasRef.current.canvas === null) {
             const {
                 image,
             } = // @ts-ignore
@@ -62,38 +46,39 @@ export function useHookmaMap() {
                 image.height
             ).getContext("2d");
             if (!canvas) return console.error("could not create canvas :(");
-            interRef.current.canvas = canvas;
+            canvasRef.current.canvas = canvas;
             console.log(imageRef.current);
             canvas.drawImage(image, 0, 0);
             const { scale } = imageRef.current;
             // @ts-ignore
             const { width, height } = image;
-            console.log(scale, width, height);
-            interRef.current.maps = {
+            canvasRef.current.maps = {
                 x: (x: number) =>
                     Math.floor(map(x, -scale.x / 2, scale.x / 2, 0, width)),
                 y: (y: number) =>
                     Math.floor(map(y, -scale.y / 2, scale.y / 2, 0, height)),
             };
         }
-        const inter = inters[0].point;
-        const { canvas, maps } = interRef.current;
-
-        const x = maps?.x(inter.x) || 0;
-        const y = maps?.y(inter.z) || 0;
-        const pixelData = canvas!.getImageData(
-            x - SAMPLE_SIZE_HALF,
-            y - SAMPLE_SIZE_HALF,
-            SAMPLE_SIZE,
-            SAMPLE_SIZE
-        ).data;
-        interRef.current.color = averageRGBAColorArr(pixelData);
+        const { canvas, maps } = canvasRef.current;
+        canvasRef.current.color = [];
+        for (let box of floatyBoxesRef.current) {
+            if (!box.current) return;
+            const offset = box.current.getWorldPosition();
+            const x = maps?.x(offset.x) || 0;
+            const y = maps?.y(offset.z) || 0;
+            const pixelData = canvas!.getImageData(
+                x - SAMPLE_SIZE_HALF,
+                y - SAMPLE_SIZE_HALF,
+                SAMPLE_SIZE,
+                SAMPLE_SIZE
+            ).data;
+            canvasRef.current.color.push(averageRGBAColorArr(pixelData));
+        }
     };
     useFrame(() => {
-        handleIntersection();
         getColorAtIntersection();
     });
-    return [compRef, imageRef, interRef] as const;
+    return [imageRef, canvasRef] as const;
 }
 const SAMPLE_SIZE = 10;
 const SAMPLE_SIZE_HALF = SAMPLE_SIZE / 2;

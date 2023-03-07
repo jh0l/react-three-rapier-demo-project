@@ -55,46 +55,74 @@ export const Car: Demo = () => {
         [3, -1, -3],
     ];
     const indexSides = ["left", "right"] as const;
-    const floatyBoxRef = useRef<THREE.Mesh>(null);
+    const floatyBoxesRef = useRef<RefObject<THREE.Mesh>[]>([
+        createRef(),
+        createRef(),
+        createRef(),
+        createRef(),
+    ] as RefObject<THREE.Mesh>[]);
+    const floatBoxesColorRef = useRef<RefObject<THREE.MeshPhysicalMaterial>[]>([
+        createRef(),
+        createRef(),
+        createRef(),
+        createRef(),
+    ] as RefObject<THREE.MeshPhysicalMaterial>[]);
     const wheelRefs = useRef(
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
-    const floatBoxColorRef = useRef<any>(null);
-    const [compRef, imageRef, interRef] = useHookmaMap();
-    const kb = useControls(interRef.current);
+    const [imageRef, canvasRef] = useHookmaMap(floatyBoxesRef);
+    const kb = useControls(canvasRef.current);
     useFrame(() => {
-        if (!floatBoxColorRef.current || !interRef.current?.color) return;
-        const [r, g, b] = interRef.current.color;
-        if (
-            interRef.current?.inters.length &&
-            bodyRef.current &&
-            floatyBoxRef.current
-        ) {
-            const { point } = interRef.current.inters[0];
-            floatyBoxRef.current?.position.set(point.x, -3, point.z);
-            // const { x, y, z, w } = bodyRef.current.rotation();
-            floatyBoxRef.current.setRotationFromQuaternion(
-                //@ts-ignore
-                bodyRef.current.nextRotation()
-            );
-            floatBoxColorRef.current?.color.setRGB(r / 255, g / 255, b / 255);
-            if (kb.current?.sample) {
-                console.log(r, g, b);
-                console.log(interRef.current.color);
+        const parentBox = floatyBoxesRef.current[0].current;
+        if (!floatBoxesColorRef.current || !bodyRef.current || !parentBox)
+            return;
+        const { x, z } = bodyRef.current.nextTranslation();
+        parentBox.position.set(x, -3, z);
+        parentBox.setRotationFromQuaternion(
+            //@ts-ignore
+            bodyRef.current.nextRotation()
+        );
+        for (let i = 0; i < floatBoxesColorRef.current.length; i++) {
+            if (canvasRef.current.color[i]) {
+                const toDec = (x: number) => x / 255;
+                const [r, g, b] = canvasRef.current.color[i].map(toDec);
+                floatBoxesColorRef.current[i].current?.color.setRGB(r, g, b);
+            }
+        }
+        if (canvasRef.current.color[0] && kb.current.sample) {
+            const [r, g, b] = canvasRef.current.color[0];
+            console.log(r, g, b);
+            console.log(canvasRef.current.color);
+            for (let floatyBox of floatyBoxesRef.current) {
+                console.log(floatyBox.current?.position);
             }
         }
     });
     return (
         <>
-            <Box ref={floatyBoxRef}>
+            <Box ref={floatyBoxesRef.current[0]}>
                 <meshPhysicalMaterial
                     color={"red"}
                     metalness={1}
                     reflectivity={0}
-                    ref={floatBoxColorRef}
+                    ref={floatBoxesColorRef.current[0]}
                 />
+                {floatyBoxesRef.current.slice(1).map((ref, index) => (
+                    <Box
+                        ref={ref}
+                        key={index + 1}
+                        position={[-(index + 1) * 2, 0, 0]}
+                    >
+                        <meshPhysicalMaterial
+                            color={"red"}
+                            metalness={1}
+                            reflectivity={0}
+                            ref={floatBoxesColorRef.current[index + 1]}
+                        />
+                    </Box>
+                ))}
             </Box>
-            <group position={[-70, -3, 20]} rotation={[0, -Math.PI / 1.5, 0]}>
+            <group position={[-38, -3, 10]} rotation={[0, -Math.PI / 1.5, 0]}>
                 <RigidBody
                     colliders="cuboid"
                     ref={bodyRef}
@@ -107,7 +135,6 @@ export const Car: Demo = () => {
                         castShadow
                         receiveShadow
                         name="chassis"
-                        ref={compRef}
                     >
                         <meshStandardMaterial color={"red"} />
                     </Box>
