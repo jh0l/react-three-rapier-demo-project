@@ -13,6 +13,7 @@ specifiers:
   react: 18.2.0
   react-dom: 18.2.0
   react-router-dom: 6.4.3
+  stackblur-canvas: ^2.5.0
   three: 0.146.0
   three-mesh-bvh: ^0.5.13
   three-stdlib: '*'
@@ -31,6 +32,7 @@ dependencies:
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-router-dom: 6.4.3_biqbaboplfbrettd7655fr4n2y
+  stackblur-canvas: 2.5.0
   three: 0.146.0
   three-mesh-bvh: 0.5.23_three@0.146.0
   three-stdlib: 2.21.8_three@0.146.0
@@ -1696,6 +1698,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       extend-shallow: 3.0.2
+    dev: false
+
+  /stackblur-canvas/2.5.0:
+    resolution: {integrity: sha512-EeNzTVfj+1In7aSLPKDD03F/ly4RxEuF/EX0YcOG0cKoPXs+SLZxDawQbexQDBzwROs4VKLWTOaZQlZkGBFEIQ==}
+    engines: {node: '>=0.1.14'}
     dev: false
 
   /stats.js/0.17.0:

@@ -1,33 +1,31 @@
 import * as THREE from "three";
 import { RefObject, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
+import * as StackBlur from "stackblur-canvas";
 export interface CanvasRef {
     canvas: OffscreenCanvasRenderingContext2D | null;
-    color: number[][];
+    color: Uint8ClampedArray[];
     maps?: {
         x: (x: number) => number;
         y: (y: number) => number;
     };
 }
-// average the rgb values of rgba (w/ alpha!) ImageData array to get a single color
-function averageRGBAColorArr(arr: Uint8ClampedArray) {
-    let res = [0, 0, 0];
-    for (let i = 0; i < arr.length; i += 4) {
-        res[0] += arr[i];
-        res[1] += arr[i + 1];
-        res[2] += arr[i + 2];
-    }
-    res[0] = Math.floor(res[0] / (arr.length / 4));
-    res[1] = Math.floor(res[1] / (arr.length / 4));
-    res[2] = Math.floor(res[2] / (arr.length / 4));
-    return res;
-}
+
 type FloatyBoxesType = React.MutableRefObject<
     RefObject<
         THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>
     >[]
 >;
-export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
+const REFACPLS_LOL = [
+    new THREE.Vector3(),
+    new THREE.Vector3(),
+    new THREE.Vector3(),
+    new THREE.Vector3(),
+];
+export function useHookmaMap(
+    floatyBoxesRef: FloatyBoxesType,
+    setMap: React.Dispatch<React.SetStateAction<string>>
+) {
     const imageRef = useRef<THREE.Mesh>(null);
     const canvasRef = useRef<CanvasRef>({
         canvas: null as null | OffscreenCanvasRenderingContext2D,
@@ -41,14 +39,22 @@ export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
                 image,
             } = // @ts-ignore
                 (imageRef.current!.material as THREE.MeshBasicMaterial).map!;
-            const canvas = new OffscreenCanvas(
-                image.width,
-                image.height
-            ).getContext("2d");
-            if (!canvas) return console.error("could not create canvas :(");
-            canvasRef.current.canvas = canvas;
+            const canvasEl = new OffscreenCanvas(image.width, image.height);
             console.log(imageRef.current);
+            const canvas = canvasEl.getContext("2d");
+            if (!canvas) return console.error("could not create canvas :(");
             canvas.drawImage(image, 0, 0);
+            // blur canvas image  at initialisation to save on averaging a bunch of pixels
+            // must support safari
+            // @ts-ignore
+            // try using StackBlur.imageDataRGBA and .putImageData?
+            StackBlur.canvasRGB(canvasEl, 0, 0, image.width, image.height, 20);
+            // debug
+            canvasEl.convertToBlob().then((b) => {
+                const url = URL.createObjectURL(b);
+                setMap(url);
+                canvasRef.current.canvas = canvas;
+            });
             const { scale } = imageRef.current;
             // @ts-ignore
             const { width, height } = image;
@@ -58,21 +64,18 @@ export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
                 y: (y: number) =>
                     Math.floor(map(y, -scale.y / 2, scale.y / 2, 0, height)),
             };
-        }
-        const { canvas, maps } = canvasRef.current;
-        canvasRef.current.color = [];
-        for (let box of floatyBoxesRef.current) {
-            if (!box.current) return;
-            const offset = box.current.getWorldPosition();
-            const x = maps?.x(offset.x) || 0;
-            const y = maps?.y(offset.z) || 0;
-            const pixelData = canvas!.getImageData(
-                x - SAMPLE_SIZE_HALF,
-                y - SAMPLE_SIZE_HALF,
-                SAMPLE_SIZE,
-                SAMPLE_SIZE
-            ).data;
-            canvasRef.current.color.push(averageRGBAColorArr(pixelData));
+        } else {
+            const { canvas, maps } = canvasRef.current;
+            canvasRef.current.color = [];
+            for (let i = 0; i < floatyBoxesRef.current.length; i++) {
+                const box = floatyBoxesRef.current[i];
+                if (!box.current) return;
+                const offset = box.current.getWorldPosition(REFACPLS_LOL[i]);
+                const x = maps?.x(offset.x) || 0;
+                const y = maps?.y(offset.z) || 0;
+                const pixelData = canvas.getImageData(x, y, 1, 1).data;
+                canvasRef.current.color.push(pixelData);
+            }
         }
     };
     useFrame(() => {
@@ -80,8 +83,7 @@ export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
     });
     return [imageRef, canvasRef] as const;
 }
-const SAMPLE_SIZE = 10;
-const SAMPLE_SIZE_HALF = SAMPLE_SIZE / 2;
+
 function map(
     x: number,
     in_min: number,

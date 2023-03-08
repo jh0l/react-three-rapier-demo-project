@@ -94,7 +94,7 @@ export const App = () => {
                         <Physics
                             paused={paused}
                             key={physicsKey}
-                            gravity={[0, -250, 0]}
+                            gravity={[0, -200, 0]}
                         >
                             <directionalLight
                                 castShadow
