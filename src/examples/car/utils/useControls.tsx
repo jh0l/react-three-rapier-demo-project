@@ -1,6 +1,7 @@
 import { RefObject, useEffect, useRef } from "react";
 import { CanvasRef } from "./useHookmaMap";
 import { useFrame } from "@react-three/fiber";
+import { getColorName } from "./colors";
 
 export function useKeyPresses(event: (key: string, b: boolean) => void) {
     useEffect(() => {
@@ -33,6 +34,10 @@ export interface ControlRes {
     left: number;
     right: number;
     auto: boolean;
+    commands: {
+        queue: CommandsQueue;
+        pullup: number;
+    };
     sample: boolean;
 }
 function useKeyboard(res: RefObject<ControlRes>) {
@@ -80,28 +85,128 @@ function useKeyboard(res: RefObject<ControlRes>) {
         }
     });
 }
-const THRESHOLD = 50;
-export function useControls(interRef?: CanvasRef) {
-    const res = useRef<ControlRes>({
+type CommandsQueue = (COMMAND | number)[];
+const DEFAULT_COMMANDS: CommandsQueue = [
+    "COAST",
+    "WAIT",
+    "",
+    "RIGHT",
+    1400,
+    "",
+    "RIGHT",
+    1600,
+];
+const PULLUP = 6;
+type COMMAND = "" | "COAST" | "WAIT" | "STOP" | "RIGHT" | "LEFT" | "STRAIGHT";
+export function useControls(canvasRef?: CanvasRef) {
+    const ref = useRef<ControlRes>({
         left: 0,
         right: 0,
         auto: false,
+        commands: {
+            queue: [...DEFAULT_COMMANDS],
+            pullup: 0,
+        },
         sample: false,
     });
-    useKeyboard(res);
+    useKeyboard(ref);
     useFrame(() => {
-        if (!res.current.auto || !interRef?.color) return;
-        // use color to control car - black means turn right, white means turn left
-        // const [r, g, b] = interRef.color;
-        // const reflect = ((r + g + b) / 3 / 255) * 100;
-        // const deviation = (reflect - THRESHOLD) / 100;
-        // const turn = deviation * PROPORTIONAL_GAIN;
-        // console.log(turn);
-        // res.current.left = -turn + 1;
-        // res.current.right = turn + 1;
-        // console.log(res.current);
+        if (!ref.current.auto || !canvasRef?.color) return;
+        if (ref.current.auto && ref.current.commands.queue.length < 1) {
+            ref.current.commands.queue = [...DEFAULT_COMMANDS];
+            ref.current.commands.pullup = 0;
+        }
+        if (
+            ref.current.commands.queue.length > 0 &&
+            ref.current.commands.queue[0] !== ""
+        ) {
+            // command currently executing
+            if (ref.current.commands.queue[0] === "COAST") {
+                ref.current.commands.queue.shift();
+                console.log("bing bong");
+                const coast = () =>
+                    setTimeout(() => {
+                        if (ref.current.commands.queue[0] !== "WAIT") return;
+                        console.log(ref.current.commands.queue[0]);
+                        const colors = canvasRef.color.map((v) =>
+                            getColorName(
+                                [...v].map((x) => Math.round(x / 255) * 255)
+                            )
+                        );
+                        console.log(...colors);
+                        const [top, lft, bot, rgt] = colors;
+                        if (
+                            top === "black" &&
+                            lft === "white" &&
+                            bot === "black" &&
+                            rgt === "white"
+                        ) {
+                            // get rid of "WAIT"
+                            ref.current.commands.queue.shift();
+                        } else {
+                            ref.current.left = 1;
+                            ref.current.right = 1;
+                            coast();
+                        }
+                    }, 32);
+                coast();
+            }
+            return;
+        }
+        const colors = canvasRef.color.map((v) =>
+            getColorName([...v].map((x) => Math.round(x / 255) * 255))
+        );
+        const [top, lft, bot, rgt] = colors;
+        let left = 0;
+        let right = 0;
+        if (top === "black" && bot === "black") (left = 1), (right = 1);
+        if (lft === "black") (left = 0), (right = 1);
+        if (rgt === "black") (left = 1), (right = 0);
+        if (bot === "black" && top === "white" && rgt === "white")
+            (left = 0), (right = 1);
+        if (bot === "black" && top === "white" && lft === "white")
+            (left = 1), (right = 0);
+        if (
+            bot === "black" &&
+            top === "white" &&
+            lft === "white" &&
+            rgt === "white"
+        )
+            (left = 1), (right = 1);
+        // if there's enough black pixels, execute the next command
+        if (colors.reduce((acc, c) => acc + Number(c === "black"), 0) > 2) {
+            const { commands } = ref.current;
+            // make sure all black wasn't a fluke
+            if (commands.pullup > 0) return commands.pullup--;
+            commands.pullup = PULLUP;
+            // remove "" and read next command
+            commands.queue.shift();
+            const command = commands.queue.shift();
+            if (command === "STOP") {
+                left = 0;
+                right = 0;
+            }
+            if (command === "RIGHT") {
+                left = 1;
+                right = -0.44;
+            }
+            if (command === "LEFT") {
+                left = -0.44;
+                right = 1;
+            }
+            // time to wait
+            const time = commands.queue[0];
+            if (typeof time == "number") {
+                setTimeout(() => {
+                    commands.queue.shift();
+                }, time);
+            }
+        } else {
+            ref.current.commands.pullup = PULLUP;
+        }
+        ref.current.left = left;
+        ref.current.right = right;
     });
 
-    return res;
+    return ref;
 }
-const PROPORTIONAL_GAIN = 1.6;

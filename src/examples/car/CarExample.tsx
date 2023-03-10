@@ -12,7 +12,7 @@ import { ControlRes, useControls } from "./utils/useControls";
 import { MAP_ASP, MAP_SCALE, useHookmaMap } from "./utils/useHookmaMap";
 import * as THREE from "three";
 
-const WHEEL_VEL = 13;
+const WHEEL_VEL = 15;
 const WHEEL_FAC = 100;
 const WheelJoint = ({
     body,
