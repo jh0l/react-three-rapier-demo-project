@@ -1,7 +1,6 @@
 import * as THREE from "three";
-import { RefObject, useRef } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
-import * as StackBlur from "stackblur-canvas";
 export interface CanvasRef {
     canvas: OffscreenCanvasRenderingContext2D | null;
     color: Uint8ClampedArray[];
@@ -9,6 +8,7 @@ export interface CanvasRef {
         x: (x: number) => number;
         y: (y: number) => number;
     };
+    vectors: number[][];
 }
 
 type FloatyBoxesType = React.MutableRefObject<
@@ -16,48 +16,36 @@ type FloatyBoxesType = React.MutableRefObject<
         THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>
     >[]
 >;
-const REFACPLS_LOL = [
-    new THREE.Vector3(),
-    new THREE.Vector3(),
-    new THREE.Vector3(),
-    new THREE.Vector3(),
-];
-export function useHookmaMap(
-    floatyBoxesRef: FloatyBoxesType,
-    setMap: React.Dispatch<React.SetStateAction<string>>
-) {
-    const imageRef = useRef<THREE.Mesh>(null);
+
+export const MAP_SCALE = 55;
+export const MAP_ASP = 1.75;
+
+export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
+    const [image, setImage] = useState<HTMLImageElement | null>(null);
+    useEffect(() => {
+        const img = new Image();
+        img.src = "map_blurred.png";
+        img.onload = () => {
+            setImage(img);
+        };
+    }, []);
     const canvasRef = useRef<CanvasRef>({
         canvas: null as null | OffscreenCanvasRenderingContext2D,
         color: [],
+        vectors: [],
     });
+    const STUPID_VEC = new THREE.Vector3();
     const getColorAtIntersection = () => {
-        if (!imageRef.current) return null;
-
+        if (!image) return null;
         if (canvasRef.current.canvas === null) {
-            const {
-                image,
-            } = // @ts-ignore
-                (imageRef.current!.material as THREE.MeshBasicMaterial).map!;
-            const canvasEl = new OffscreenCanvas(image.width, image.height);
-            console.log(imageRef.current);
+            const { width, height } = image;
+
+            const canvasEl = new OffscreenCanvas(width, height);
             const canvas = canvasEl.getContext("2d");
             if (!canvas) return console.error("could not create canvas :(");
             canvas.drawImage(image, 0, 0);
-            // blur canvas image  at initialisation to save on averaging a bunch of pixels
-            // must support safari
-            // @ts-ignore
-            // try using StackBlur.imageDataRGBA and .putImageData?
-            StackBlur.canvasRGB(canvasEl, 0, 0, image.width, image.height, 20);
-            // debug
-            canvasEl.convertToBlob().then((b) => {
-                const url = URL.createObjectURL(b);
-                setMap(url);
-                canvasRef.current.canvas = canvas;
-            });
-            const { scale } = imageRef.current;
-            // @ts-ignore
-            const { width, height } = image;
+            canvasRef.current.canvas = canvas;
+            const scale = { y: MAP_SCALE, x: MAP_SCALE * MAP_ASP };
             canvasRef.current.maps = {
                 x: (x: number) =>
                     Math.floor(map(x, -scale.x / 2, scale.x / 2, 0, width)),
@@ -67,21 +55,23 @@ export function useHookmaMap(
         } else {
             const { canvas, maps } = canvasRef.current;
             canvasRef.current.color = [];
+            canvasRef.current.vectors = [];
             for (let i = 0; i < floatyBoxesRef.current.length; i++) {
                 const box = floatyBoxesRef.current[i];
                 if (!box.current) return;
-                const offset = box.current.getWorldPosition(REFACPLS_LOL[i]);
+                const offset = box.current.getWorldPosition(STUPID_VEC);
                 const x = maps?.x(offset.x) || 0;
                 const y = maps?.y(offset.z) || 0;
                 const pixelData = canvas.getImageData(x, y, 1, 1).data;
                 canvasRef.current.color.push(pixelData);
+                canvasRef.current.vectors.push([x, y]);
             }
         }
     };
     useFrame(() => {
         getColorAtIntersection();
     });
-    return [imageRef, canvasRef] as const;
+    return [canvasRef] as const;
 }
 
 function map(

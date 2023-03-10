@@ -6,10 +6,11 @@ import {
     useRevoluteJoint,
     Vector3Array,
 } from "@react-three/rapier";
-import { createRef, forwardRef, RefObject, useRef, useState } from "react";
+import { createRef, RefObject, useRef } from "react";
 import { Demo } from "../../App";
 import { ControlRes, useControls } from "./utils/useControls";
-import { useHookmaMap } from "./utils/useHookmaMap";
+import { MAP_ASP, MAP_SCALE, useHookmaMap } from "./utils/useHookmaMap";
+import * as THREE from "three";
 
 const WHEEL_VEL = 13;
 const WHEEL_FAC = 100;
@@ -47,10 +48,8 @@ const WheelJoint = ({
 
     return null;
 };
-const TODEC = (x: number) => x / 255;
 
 export const Car: Demo = () => {
-    const [mapUrl, setSource] = useState<string>("map.png");
     const bodyRef = useRef<RapierRigidBody>(null);
     const wheelPositions: [number, number, number][] = [
         [3, -1, 3],
@@ -72,21 +71,17 @@ export const Car: Demo = () => {
     const wheelRefs = useRef(
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
-    const [imageRef, canvasRef] = useHookmaMap(floatyBoxesRef, setSource);
+    const STUPID_VEC = new THREE.Vector3();
+    const [canvasRef] = useHookmaMap(floatyBoxesRef);
     const kb = useControls(canvasRef.current);
     useFrame(() => {
         const parentBox = floatyBoxesRef.current[0].current;
         if (!floatBoxesColorRef.current || !bodyRef.current || !parentBox)
             return;
-        // const { x, z } = bodyRef.current.nextTranslation();
-        // parentBox.position.set(x, -3, z);
-        // parentBox.setRotationFromQuaternion(
-        //     //@ts-ignore
-        //     bodyRef.current.nextRotation()
-        // );
         for (let i = 0; i < floatBoxesColorRef.current.length; i++) {
             if (canvasRef.current.color[i]) {
-                const [r, g, b] = canvasRef.current.color[i].map(TODEC);
+                const rgb = canvasRef.current.color[i];
+                const [r, g, b] = [...rgb].map((x) => x / 255);
                 floatBoxesColorRef.current[i].current?.color.setRGB(r, g, b);
             }
         }
@@ -94,8 +89,12 @@ export const Car: Demo = () => {
             const [r, g, b] = canvasRef.current.color[0];
             console.log(r, g, b);
             console.log(canvasRef.current.color);
-            for (let floatyBox of floatyBoxesRef.current) {
-                console.log(floatyBox.current?.position);
+            for (let i = 0; i < floatyBoxesRef.current.length; i++) {
+                console.log(i);
+                const floatyBox = floatyBoxesRef.current[i];
+                console.log(floatyBox.current?.getWorldPosition(STUPID_VEC));
+                const vector = canvasRef.current.vectors[i];
+                console.log(vector);
             }
         }
     });
@@ -175,24 +174,21 @@ export const Car: Demo = () => {
                     />
                 ))}
             </group>
-            <Map ref={imageRef} map_url={mapUrl} />
+            <Map map_url="map.png" />
         </>
     );
 };
 
-const MAP_SCALE = 55;
-const MAP_ASP = 1.75;
-const Map = forwardRef<any, { map_url: string }>(({ map_url }, ref) => {
+const Map = ({ map_url }: { map_url: string }) => {
     return (
         <Image
-            ref={ref}
             position={[0, -7.1, 0]}
             scale={[MAP_SCALE * MAP_ASP, MAP_SCALE]}
             rotation={[-Math.PI / 2, 0, 0]}
             url={map_url}
         />
     );
-});
+};
 
 // car city carpet 😎
 // const MAP_SCALE = 100;
