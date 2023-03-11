@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 export interface CanvasRef {
-    canvas: OffscreenCanvasRenderingContext2D | null;
+    canvas: CanvasRenderingContext2D | null;
     color: Uint8ClampedArray[];
     maps?: {
         x: (x: number) => number;
@@ -30,7 +30,7 @@ export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
         };
     }, []);
     const canvasRef = useRef<CanvasRef>({
-        canvas: null as null | OffscreenCanvasRenderingContext2D,
+        canvas: null as null | CanvasRenderingContext2D,
         color: [],
         vectors: [],
     });
@@ -40,7 +40,9 @@ export function useHookmaMap(floatyBoxesRef: FloatyBoxesType) {
         if (canvasRef.current.canvas === null) {
             const { width, height } = image;
 
-            const canvasEl = new OffscreenCanvas(width, height);
+            const canvasEl = document.createElement("canvas")
+            canvasEl.width = width;
+            canvasEl.height = height;
             const canvas = canvasEl.getContext("2d");
             if (!canvas) return console.error("could not create canvas :(");
             canvas.drawImage(image, 0, 0);
