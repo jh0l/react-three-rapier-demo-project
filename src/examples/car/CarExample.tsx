@@ -1,4 +1,4 @@
-import { Box, Cylinder, Image } from "@react-three/drei";
+import { Box, Cylinder, Html, Image } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
     RapierRigidBody,
@@ -6,13 +6,18 @@ import {
     useRevoluteJoint,
     Vector3Array,
 } from "@react-three/rapier";
-import { createRef, RefObject, useRef } from "react";
+import { createRef, RefObject, useEffect, useRef, useState } from "react";
 import { Demo } from "../../App";
 import { ControlRes, useControls } from "./utils/useControls";
-import { MAP_ASP, MAP_SCALE, useHookmaMap } from "./utils/useHookmaMap";
+import {
+    MAP_ASP,
+    MAP_SCALE,
+    useCanvasMap,
+    CanvasRes as CanvasRes,
+} from "./utils/useCanvasMap";
 import * as THREE from "three";
 
-const WHEEL_VEL = 15;
+const WHEEL_VEL = 20;
 const WHEEL_FAC = 100;
 const WheelJoint = ({
     body,
@@ -52,8 +57,8 @@ const WheelJoint = ({
 export const Car: Demo = () => {
     const bodyRef = useRef<RapierRigidBody>(null);
     const wheelPositions: [number, number, number][] = [
-        [3, -1, 3],
-        [3, -1, -3],
+        [1, 0, 3],
+        [1, 0, -3],
     ];
     const sensorPositions: [number, number, number][] = [
         [-2.5, 2, 0],
@@ -72,23 +77,22 @@ export const Car: Demo = () => {
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
     const STUPID_VEC = new THREE.Vector3();
-    const [canvasRef] = useHookmaMap(floatyBoxesRef);
-    const kb = useControls(canvasRef.current);
+    const [canvasRef] = useCanvasMap(floatyBoxesRef);
+    const kb = useControls(canvasRef);
     useFrame(() => {
         const parentBox = floatyBoxesRef.current[0].current;
         if (!floatBoxesColorRef.current || !bodyRef.current || !parentBox)
             return;
         for (let i = 0; i < floatBoxesColorRef.current.length; i++) {
-            if (canvasRef.current.color[i]) {
-                const rgb = canvasRef.current.color[i];
-                const [r, g, b] = [...rgb].map((x) => x / 255);
-                floatBoxesColorRef.current[i].current?.color.setRGB(r, g, b);
+            if (canvasRef.current.luminance) {
+                const v = canvasRef.current.luminance.get(i);
+                floatBoxesColorRef.current[i].current?.color.setRGB(v, v, v);
             }
         }
-        if (canvasRef.current.color[0] && kb.current.sample) {
-            const [r, g, b] = canvasRef.current.color[0];
-            console.log(r, g, b);
-            console.log(canvasRef.current.color);
+        if (canvasRef.current.luminance.get(0) && kb.current.sample) {
+            const v = canvasRef.current.luminance;
+            console.log(v);
+            console.log(canvasRef.current.luminance);
             for (let i = 0; i < floatyBoxesRef.current.length; i++) {
                 console.log(i);
                 const floatyBox = floatyBoxesRef.current[i];
@@ -112,6 +116,16 @@ export const Car: Demo = () => {
                         ref={floatyBoxesRef.current[0]}
                         position={sensorPositions[0]}
                     >
+                        <Html>
+                            {canvasRef.current && kb.current && (
+                                <Readout
+                                    canvasRef={canvasRef.current}
+                                    controlRef={kb.current}
+                                    bodyRef={bodyRef}
+                                />
+                            )}
+                            <div style={labelStyle}>0</div>
+                        </Html>
                         <meshPhysicalMaterial
                             color={"red"}
                             metalness={1}
@@ -124,6 +138,9 @@ export const Car: Demo = () => {
                                 key={index + 1}
                                 position={sensorPositions[index + 1]}
                             >
+                                <Html>
+                                    <div style={labelStyle}>{index + 1}</div>
+                                </Html>
                                 <meshPhysicalMaterial
                                     color={"red"}
                                     metalness={1}
@@ -189,6 +206,58 @@ const Map = ({ map_url }: { map_url: string }) => {
         />
     );
 };
+
+const labelStyle: React.CSSProperties = {
+    color: "white",
+    fontFamily: "monospace",
+    textShadow: "0 0 3px black",
+    position: "absolute",
+    top: "-15px",
+};
+
+const merge = (prev: object, next: object) => ({ ...prev, ...next });
+const readOutStyle: React.CSSProperties = merge(labelStyle, {
+    position: "absolute",
+    left: "-10vw",
+    top: "-20vh",
+    width: "100px",
+    height: "100px",
+    fontFamily: "monospace",
+});
+
+interface ReadoutProps {
+    canvasRef: CanvasRes;
+    controlRef: ControlRes;
+    bodyRef: RefObject<RapierRigidBody>;
+}
+function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
+    const [data, setData] = useState("");
+    const ref = useRef<number>(0);
+    useEffect(() => {
+        ref.current = setInterval(() => {
+            if (controlRef && bodyRef.current) {
+                let { x, y, z } = bodyRef.current.nextTranslation();
+                let [xs, ys, zs] = [x, y, z].map((v) =>
+                    v.toFixed(1).padEnd(5, " ")
+                );
+                const loc = `V: x${xs} y${ys} z${zs}\n`;
+                const [LW, RW] = [controlRef.left, controlRef.right].map((x) =>
+                    String(x).padEnd(4, " ")
+                );
+                let LR = `LW:${LW} RW:${RW}\n`;
+                const [T, L, B, R] = canvasRef.luminance.map((x) =>
+                    String(x).padEnd(4, " ")
+                );
+                let LUM = `T:${T} L:${L}\nB:${B} R:${R}`;
+                setData(loc + LR + LUM);
+            }
+        }, 100);
+        return () => {
+            ref.current && clearInterval(ref.current);
+        };
+    }, []);
+    return <pre style={readOutStyle}>{data}</pre>;
+}
 
 // car city carpet 😎
 // const MAP_SCALE = 100;

@@ -1,7 +1,8 @@
-import { RefObject, useEffect, useRef } from "react";
-import { CanvasRef } from "./useHookmaMap";
+import { RefObject, useContext, useEffect, useRef } from "react";
+import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
-import { getColorName } from "./colors";
+import { useDemo } from "../../../App";
+import { mapLinear } from "three/src/math/MathUtils";
 
 export function useKeyPresses(event: (key: string, b: boolean) => void) {
     useEffect(() => {
@@ -29,18 +30,23 @@ const keyMap: KeyMapType<string> = {
     " ": "brake",
     k: "auto",
     j: "sample",
+    r: "reset",
+    p: "paused",
 };
 export interface ControlRes {
     left: number;
     right: number;
     auto: boolean;
     commands: {
-        queue: CommandsQueue;
-        pullup: number;
+        queue: Command[];
     };
     sample: boolean;
 }
-function useKeyboard(res: RefObject<ControlRes>) {
+function useKeyboard(
+    res: RefObject<ControlRes>,
+    idx: RefObject<{ v: number }>
+) {
+    const demo = useDemo();
     const keys = useRef<KeyMapType<boolean>>({
         forward: false,
         backward: false,
@@ -48,13 +54,29 @@ function useKeyboard(res: RefObject<ControlRes>) {
         right: false,
         brake: false,
         auto: false,
+        reset: false,
+        paused: false,
         sample: false,
     });
     useKeyPresses((key, b) => {
-        if (key in keyMap && keyMap[key] in keys.current && res.current) {
+        if (
+            key in keyMap &&
+            keyMap[key] in keys.current &&
+            res.current &&
+            idx.current
+        ) {
             keys.current[keyMap[key]] = b;
-            const { forward, backward, left, right, brake, auto, sample } =
-                keys.current;
+            const {
+                forward,
+                backward,
+                left,
+                right,
+                brake,
+                auto,
+                sample,
+                reset,
+                paused,
+            } = keys.current;
             // figure out power for left and right wheels based on what keys are pressed
             res.current.left = 0;
             res.current.right = 0;
@@ -80,133 +102,207 @@ function useKeyboard(res: RefObject<ControlRes>) {
             }
             if (auto) {
                 res.current.auto = !res.current.auto;
+                idx.current.v = 0;
             }
             res.current.sample = sample;
+            if (reset && demo.resetPhysics && demo.setPaused) {
+                console.log("reset");
+                demo.resetPhysics();
+                demo.setPaused(false);
+            }
+            if (paused && demo.setPaused) {
+                demo.setPaused((x) => !x);
+            }
         }
     });
 }
-type CommandsQueue = (COMMAND | number)[];
-const DEFAULT_COMMANDS: CommandsQueue = [
-    "COAST",
-    "WAIT",
-    "",
-    "RIGHT",
-    1400,
-    "",
-    "RIGHT",
-    1600,
-];
-const PULLUP = 6;
-type COMMAND = "" | "COAST" | "WAIT" | "STOP" | "RIGHT" | "LEFT" | "STRAIGHT";
-export function useControls(canvasRef?: CanvasRef) {
+
+export function useControls(canvasRef: RefObject<CanvasRes>) {
+    const idx = useRef({ v: 0 });
     const ref = useRef<ControlRes>({
         left: 0,
         right: 0,
         auto: false,
         commands: {
-            queue: [...DEFAULT_COMMANDS],
-            pullup: 0,
+            queue: [
+                go(canvasRef, () => idx.current.v++, timer(300)),
+                trace(canvasRef, () => idx.current.v++, rightIntersection),
+                stop(canvasRef, () => idx.current.v++, timer(10)),
+                align(canvasRef, () => idx.current.v++, timer(500)),
+                drive(canvasRef, () => idx.current.v++, timer(350), -1),
+                trace(canvasRef, () => idx.current.v++, rightIntersection),
+                drive(canvasRef, () => idx.current.v++, timer(350), -1),
+                trace(canvasRef, () => idx.current.v++, rightIntersection),
+                fin(canvasRef, () => idx.current.v++, none),
+            ],
         },
         sample: false,
     });
-    useKeyboard(ref);
+    useKeyboard(ref, idx);
     useFrame(() => {
-        if (!ref.current.auto || !canvasRef?.color) return;
-        if (ref.current.auto && ref.current.commands.queue.length < 1) {
-            ref.current.commands.queue = [...DEFAULT_COMMANDS];
-            ref.current.commands.pullup = 0;
+        const { commands, auto, sample } = ref.current;
+        if (auto) {
+            if (idx.current.v < commands.queue.length) {
+                let [left, right] = commands.queue[idx.current.v]().map(
+                    (x) =>
+                        Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100)) ||
+                        0
+                );
+                ref.current.left = left;
+                ref.current.right = right;
+            } else {
+                ref.current.auto = false;
+            }
         }
-        if (
-            ref.current.commands.queue.length > 0 &&
-            ref.current.commands.queue[0] !== ""
-        ) {
-            // command currently executing
-            if (ref.current.commands.queue[0] === "COAST") {
-                ref.current.commands.queue.shift();
-                console.log("bing bong");
-                const coast = () =>
-                    setTimeout(() => {
-                        if (ref.current.commands.queue[0] !== "WAIT") return;
-                        console.log(ref.current.commands.queue[0]);
-                        const colors = canvasRef.color.map((v) =>
-                            getColorName(
-                                [...v].map((x) => Math.round(x / 255) * 255)
-                            )
-                        );
-                        console.log(...colors);
-                        const [top, lft, bot, rgt] = colors;
-                        if (
-                            top === "black" &&
-                            lft === "white" &&
-                            bot === "black" &&
-                            rgt === "white"
-                        ) {
-                            // get rid of "WAIT"
-                            ref.current.commands.queue.shift();
-                        } else {
-                            ref.current.left = 1;
-                            ref.current.right = 1;
-                            coast();
-                        }
-                    }, 32);
-                coast();
-            }
-            return;
+        if (sample) {
+            console.log(canvasRef.current?.luminance);
         }
-        const colors = canvasRef.color.map((v) =>
-            getColorName([...v].map((x) => Math.round(x / 255) * 255))
-        );
-        const [top, lft, bot, rgt] = colors;
-        let left = 0;
-        let right = 0;
-        if (top === "black" && bot === "black") (left = 1), (right = 1);
-        if (lft === "black") (left = 0), (right = 1);
-        if (rgt === "black") (left = 1), (right = 0);
-        if (bot === "black" && top === "white" && rgt === "white")
-            (left = 0), (right = 1);
-        if (bot === "black" && top === "white" && lft === "white")
-            (left = 1), (right = 0);
-        if (
-            bot === "black" &&
-            top === "white" &&
-            lft === "white" &&
-            rgt === "white"
-        )
-            (left = 1), (right = 1);
-        // if there's enough black pixels, execute the next command
-        if (colors.reduce((acc, c) => acc + Number(c === "black"), 0) > 2) {
-            const { commands } = ref.current;
-            // make sure all black wasn't a fluke
-            if (commands.pullup > 0) return commands.pullup--;
-            commands.pullup = PULLUP;
-            // remove "" and read next command
-            commands.queue.shift();
-            const command = commands.queue.shift();
-            if (command === "STOP") {
-                left = 0;
-                right = 0;
-            }
-            if (command === "RIGHT") {
-                left = 1;
-                right = -0.44;
-            }
-            if (command === "LEFT") {
-                left = -0.44;
-                right = 1;
-            }
-            // time to wait
-            const time = commands.queue[0];
-            if (typeof time == "number") {
-                setTimeout(() => {
-                    commands.queue.shift();
-                }, time);
-            }
-        } else {
-            ref.current.commands.pullup = PULLUP;
-        }
-        ref.current.left = left;
-        ref.current.right = right;
     });
 
     return ref;
 }
+
+type CommandMaker<P = void> = (
+    can: RefObject<CanvasRes>,
+    next: () => void,
+    nextTrigger: (can: CanvasRes) => boolean,
+    param?: P
+) => Command;
+
+type Command = () => [number, number];
+interface mapLog {
+    (x: number, a1: number, a2: number, b1: number, b2: number): number;
+}
+
+const quadraticMap: mapLog = (x, a1, a2, b1, b2) => {
+    return mapLinear(x, a1, a2, b1, b2);
+};
+
+type Trigger = (can?: CanvasRes) => boolean;
+const none = () => false;
+const rightIntersection: Trigger = (can?: CanvasRes) => {
+    if (!can) return false;
+    const { top, bot, rgt } = can.luminance.keys();
+    return [top, bot, rgt].every((x) => x < 0.45);
+};
+const go: CommandMaker = (canRef, next, trigger) => {
+    return () => {
+        if (!canRef.current) return [0, 0];
+        const can = canRef.current;
+        if (trigger(can)) {
+            next();
+            return [0, 0];
+        }
+        return [1, 1];
+    };
+};
+const trace: CommandMaker = (canRef, next, trigger) => {
+    return () => {
+        if (!canRef.current) return [0, 0];
+        const can = canRef.current;
+        if (trigger(can)) {
+            next();
+            return [0, 0];
+        }
+        let LEFT = 1,
+            RIGHT = 1;
+        // reduce power of left or right depending of ratio of left sensor to right sensor
+        const { lft, rgt } = can.luminance.keys();
+        const turnRaw = Math.min(lft, rgt) / Math.max(lft, rgt);
+        const turn = quadraticMap(turnRaw, 0, 1, -1, 1);
+        if (lft > rgt) {
+            RIGHT = turn;
+        } else if (rgt > lft) {
+            LEFT = turn;
+        }
+        return [LEFT, RIGHT];
+    };
+};
+
+// turn the wheels in opposing directions by ratio until left and right sensors reach
+// equalibrium
+const align: CommandMaker = (canRef, next, trigger) => {
+    return () => {
+        if (!canRef.current) return [0, 0];
+        const can = canRef.current;
+        let LEFT = 0,
+            RIGHT = 0;
+        const { lft, rgt } = can.luminance.keys();
+        const turn = Math.max(lft, rgt) - Math.min(lft, rgt);
+        LEFT = RIGHT = turn;
+        if (lft > rgt) {
+            RIGHT = -turn;
+        } else if (rgt > lft) {
+            LEFT = -turn;
+        }
+        if (trigger(can) && turn < 0.1) next();
+        return [LEFT, RIGHT];
+    };
+};
+
+type TriggerMaker<T> = (p: T) => Trigger;
+const timer: TriggerMaker<number> = (ms: number) => {
+    const state = { started: false, time: Infinity };
+    return (_?: CanvasRes) => {
+        if (!state.started) {
+            state.started = true;
+            state.time = Date.now() + ms;
+        } else if (state.time < Date.now()) {
+            return true;
+        }
+        return false;
+    };
+};
+
+const stop: CommandMaker = (canRef, next, trigger) => {
+    return () => {
+        if (!canRef.current) return [0, 0];
+        if (trigger(canRef.current)) next();
+        return [0, 0];
+    };
+};
+
+const fin: CommandMaker = (_, next) => {
+    return () => {
+        next();
+        console.log("DONE");
+        return [0, 0];
+    };
+};
+
+const straight: Trigger = (can?: CanvasRes) => {
+    if (!can) return false;
+    const { top, bot, lft, rgt } = can.luminance.keys();
+    const res =
+        [top, bot].every((x) => x < 0.1) && [lft, rgt].every((x) => x > 0.9);
+    if (res) debugger;
+    return res;
+};
+
+// drive the wheels with a degree of turning: 0 = straight, -1 = full turn left, 1 = full turn right
+type DriveParam = number;
+const drive: CommandMaker<DriveParam> = (
+    canRef,
+    next,
+    trigger,
+    degrees = 0
+) => {
+    return () => {
+        if (!canRef.current) return [0, 0];
+        const can = canRef.current;
+        if (trigger(can)) {
+            next();
+            return [0, 0];
+        }
+        let LEFT = 1,
+            RIGHT = 1;
+        // reduce power of left or right depending on degrees turn
+        if (degrees < 0) {
+            RIGHT = degrees;
+        } else if (degrees > 0) {
+            LEFT = -degrees;
+        }
+
+        return [LEFT, RIGHT];
+    };
+};
