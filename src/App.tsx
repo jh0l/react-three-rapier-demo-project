@@ -3,7 +3,7 @@ import {
     Environment,
     OrbitControls,
     OrthographicCamera,
-    PerspectiveCamera,
+    // PerspectiveCamera,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";

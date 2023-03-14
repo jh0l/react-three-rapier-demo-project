@@ -13,8 +13,6 @@
     "@react-three/drei": "9.45.0",
     "@react-three/fiber": "8.9.1",
     "@react-three/rapier": "*",
-    "@types/react": "^18.0.28",
-    "@types/three": "^0.149.0",
     "leva": "0.9.34",
     "r3f-perf": "6.4.2",
     "react": "18.2.0",
@@ -26,6 +24,9 @@
     "three-stdlib": "*"
   },
   "devDependencies": {
+    "@types/react": "^18.0.28",
+    "@types/react-dom": "^18.0.11",
+    "@types/three": "^0.149.0",
     "@vitejs/plugin-react": "^2.1.0",
     "typescript": "^4.9.5",
     "vite": "3.0.3"

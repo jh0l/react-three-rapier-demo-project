@@ -1,4 +1,4 @@
-import { RefObject, useContext, useEffect, useRef } from "react";
+import { RefObject, useEffect, useRef } from "react";
 import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
 import { useDemo } from "../../../App";
@@ -270,14 +270,14 @@ const fin: CommandMaker = (_, next) => {
     };
 };
 
-const straight: Trigger = (can?: CanvasRes) => {
-    if (!can) return false;
-    const { top, bot, lft, rgt } = can.luminance.keys();
-    const res =
-        [top, bot].every((x) => x < 0.1) && [lft, rgt].every((x) => x > 0.9);
-    if (res) debugger;
-    return res;
-};
+// const aligned: Trigger = (can?: CanvasRes) => {
+//     if (!can) return false;
+//     const { top, bot, lft, rgt } = can.luminance.keys();
+//     const res =
+//         [top, bot].every((x) => x < 0.1) && [lft, rgt].every((x) => x > 0.9);
+//     if (res) debugger;
+//     return res;
+// };
 
 // drive the wheels with a degree of turning: 0 = straight, -1 = full turn left, 1 = full turn right
 type DriveParam = number;
