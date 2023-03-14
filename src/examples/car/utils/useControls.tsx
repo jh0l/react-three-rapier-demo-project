@@ -4,6 +4,52 @@ import { useFrame } from "@react-three/fiber";
 import { useDemo } from "../../../App";
 import { mapLinear } from "three/src/math/MathUtils";
 
+export function useControls(canvasRef: RefObject<CanvasRes>) {
+    const idx = useRef({ v: 0 });
+    const ref = useRef<ControlRes>({
+        left: 0,
+        right: 0,
+        auto: false,
+        commands: {
+            queue: [
+                go(canvasRef, () => idx.current.v++, timer(300)),
+                trace(canvasRef, () => idx.current.v++, intersection),
+                stop(canvasRef, () => idx.current.v++, timer(10)),
+                align(canvasRef, () => idx.current.v++, timer(500)),
+                drive(canvasRef, () => idx.current.v++, timer(350), -1),
+                trace(canvasRef, () => idx.current.v++, intersection),
+                drive(canvasRef, () => idx.current.v++, timer(350), 0),
+                trace(canvasRef, () => idx.current.v++, intersection),
+                // drive(canvasRef, () => idx.current.v++, timer(1000), 0),
+                fin(canvasRef, () => idx.current.v++, none),
+            ],
+        },
+        sample: false,
+    });
+    useKeyboard(ref, idx);
+    useFrame(() => {
+        const { commands, auto, sample } = ref.current;
+        if (auto) {
+            if (idx.current.v < commands.queue.length) {
+                let [left, right] = commands.queue[idx.current.v]().map(
+                    (x) =>
+                        Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100)) ||
+                        0
+                );
+                ref.current.left = left;
+                ref.current.right = right;
+            } else {
+                ref.current.auto = false;
+            }
+        }
+        if (sample) {
+            console.log(canvasRef.current?.luminance);
+        }
+    });
+
+    return ref;
+}
+
 export function useKeyPresses(event: (key: string, b: boolean) => void) {
     useEffect(() => {
         const downHandler = ({ key }: KeyboardEvent) => event(key, true);
@@ -117,51 +163,6 @@ function useKeyboard(
     });
 }
 
-export function useControls(canvasRef: RefObject<CanvasRes>) {
-    const idx = useRef({ v: 0 });
-    const ref = useRef<ControlRes>({
-        left: 0,
-        right: 0,
-        auto: false,
-        commands: {
-            queue: [
-                go(canvasRef, () => idx.current.v++, timer(300)),
-                trace(canvasRef, () => idx.current.v++, rightIntersection),
-                stop(canvasRef, () => idx.current.v++, timer(10)),
-                align(canvasRef, () => idx.current.v++, timer(500)),
-                drive(canvasRef, () => idx.current.v++, timer(350), -1),
-                trace(canvasRef, () => idx.current.v++, rightIntersection),
-                drive(canvasRef, () => idx.current.v++, timer(350), -1),
-                trace(canvasRef, () => idx.current.v++, rightIntersection),
-                fin(canvasRef, () => idx.current.v++, none),
-            ],
-        },
-        sample: false,
-    });
-    useKeyboard(ref, idx);
-    useFrame(() => {
-        const { commands, auto, sample } = ref.current;
-        if (auto) {
-            if (idx.current.v < commands.queue.length) {
-                let [left, right] = commands.queue[idx.current.v]().map(
-                    (x) =>
-                        Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100)) ||
-                        0
-                );
-                ref.current.left = left;
-                ref.current.right = right;
-            } else {
-                ref.current.auto = false;
-            }
-        }
-        if (sample) {
-            console.log(canvasRef.current?.luminance);
-        }
-    });
-
-    return ref;
-}
-
 type CommandMaker<P = void> = (
     can: RefObject<CanvasRes>,
     next: () => void,
@@ -180,11 +181,15 @@ const quadraticMap: mapLog = (x, a1, a2, b1, b2) => {
 
 type Trigger = (can?: CanvasRes) => boolean;
 const none = () => false;
-const rightIntersection: Trigger = (can?: CanvasRes) => {
+
+const intersection: Trigger = (can?: CanvasRes) => {
     if (!can) return false;
     const { top, bot, rgt } = can.luminance.keys();
     return [top, bot, rgt].every((x) => x < 0.45);
 };
+
+// TODO use TriggerMaker to customize intersection to use different intersection types
+
 const go: CommandMaker = (canRef, next, trigger) => {
     return () => {
         if (!canRef.current) return [0, 0];
