@@ -79,6 +79,7 @@ export const Car: Demo = () => {
     const STUPID_VEC = new THREE.Vector3();
     const [canvasRef] = useCanvasMap(floatyBoxesRef);
     const kb = useControls(canvasRef);
+    const useGo = () => kb.current && (kb.current.auto = true);
     useFrame(() => {
         const parentBox = floatyBoxesRef.current[0].current;
         if (!floatBoxesColorRef.current || !bodyRef.current || !parentBox)
@@ -125,6 +126,7 @@ export const Car: Demo = () => {
                                 />
                             )}
                             <div style={labelStyle}>0</div>
+                            <div style={goBtn}>Start</div>
                         </Html>
                         <meshPhysicalMaterial
                             color={"red"}
@@ -210,20 +212,36 @@ const Map = ({ map_url }: { map_url: string }) => {
 const labelStyle: React.CSSProperties = {
     color: "white",
     fontFamily: "monospace",
-    textShadow: "0 0 3px black",
+    textShadow: "0 0 2px black, 0 0 5px black, 0 0 7px black",
     position: "absolute",
     top: "-15px",
 };
 
-const merge = (prev: object, next: object) => ({ ...prev, ...next });
-const readOutStyle: React.CSSProperties = merge(labelStyle, {
+const goBtn: React.CSSProperties = {
+    fontWeight: "bold",
+    cursor: "pointer",
+    position: "absolute",
+    left: 50,
+    padding: 6,
+    color: "rgba(0, 123, 123, 0.5)",
+    /* lush modern prominent material design box shadow */
+    textShadow: "0px 1px 1px #fff, 0 0 0 #000, 0px 1px 1px #fff",
+    boxShadow:
+        "0 2px 2px 1px rgba(0, 0, 0, 0.2), 0px 2px 5px rgba(0, 0, 0, 0.2)",
+    borderRadius: 3,
+    // lush modern multi tonal green active engaging fluerescent gradient background
+    background: "linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%)",
+};
+
+const readOutStyle: React.CSSProperties = {
+    ...labelStyle,
     position: "absolute",
     left: "-10vw",
     top: "-20vh",
     width: "100px",
     height: "100px",
     fontFamily: "monospace",
-});
+};
 
 interface ReadoutProps {
     canvasRef: CanvasRes;

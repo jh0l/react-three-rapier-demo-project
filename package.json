@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tsc": "tsc"
   },
   "dependencies": {
-    "@react-three/csg": "1.1.5",
+    "[@react-three/csg]": "1.1.5",
     "@react-three/drei": "9.45.0",
     "@react-three/fiber": "8.9.1",
     "@react-three/rapier": "*",

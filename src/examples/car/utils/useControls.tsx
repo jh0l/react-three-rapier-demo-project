@@ -75,6 +75,7 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
                     x = Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100));
                     output[i] = x || 0;
                 }
+                // add dampening rolling average here
                 ref.current.left = output[0];
                 ref.current.right = output[1];
             } else {
