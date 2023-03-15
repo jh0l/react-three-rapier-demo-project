@@ -8,7 +8,7 @@ import {
 } from "@react-three/rapier";
 import { createRef, RefObject, useEffect, useRef, useState } from "react";
 import { Demo } from "../../App";
-import { ControlRes, useControls } from "./utils/useControls";
+import { ControlRef, useControls } from "./utils/useControls";
 import {
     MAP_ASP,
     MAP_SCALE,
@@ -33,7 +33,7 @@ const WheelJoint = ({
     bodyAnchor: Vector3Array;
     wheelAnchor: Vector3Array;
     rotationAxis: Vector3Array;
-    controls: RefObject<ControlRes>;
+    controls: RefObject<ControlRef>;
     side: "left" | "right";
 }) => {
     const joint = useRevoluteJoint(body, wheel, [
@@ -78,8 +78,8 @@ export const Car: Demo = () => {
     );
     const STUPID_VEC = new THREE.Vector3();
     const [canvasRef] = useCanvasMap(floatyBoxesRef);
-    const kb = useControls(canvasRef);
-    const useGo = () => kb.current && (kb.current.auto = true);
+    const [kbRef, [{ auto }, setKbState]] = useControls(canvasRef);
+    const handleStart = () => setKbState({ auto: true });
     useFrame(() => {
         const parentBox = floatyBoxesRef.current[0].current;
         if (!floatBoxesColorRef.current || !bodyRef.current || !parentBox)
@@ -90,7 +90,7 @@ export const Car: Demo = () => {
                 floatBoxesColorRef.current[i].current?.color.setRGB(v, v, v);
             }
         }
-        if (canvasRef.current.luminance.get(0) && kb.current.sample) {
+        if (canvasRef.current.luminance.get(0) && kbRef.current.sample) {
             const v = canvasRef.current.luminance;
             console.log(v);
             console.log(canvasRef.current.luminance);
@@ -118,15 +118,19 @@ export const Car: Demo = () => {
                         position={sensorPositions[0]}
                     >
                         <Html>
-                            {canvasRef.current && kb.current && (
+                            {canvasRef.current && kbRef.current && (
                                 <Readout
                                     canvasRef={canvasRef.current}
-                                    controlRef={kb.current}
+                                    controlRef={kbRef.current}
                                     bodyRef={bodyRef}
                                 />
                             )}
                             <div style={labelStyle}>0</div>
-                            <div style={goBtn}>Start</div>
+                            {!auto && (
+                                <div style={goBtn} onClick={handleStart}>
+                                    Start
+                                </div>
+                            )}
                         </Html>
                         <meshPhysicalMaterial
                             color={"red"}
@@ -188,7 +192,7 @@ export const Car: Demo = () => {
                         bodyAnchor={wheelPosition}
                         wheelAnchor={[0, 0, 0]}
                         rotationAxis={[0, 0, 1]}
-                        controls={kb}
+                        controls={kbRef}
                         side={indexSides[index]}
                     />
                 ))}
@@ -217,21 +221,21 @@ const labelStyle: React.CSSProperties = {
     top: "-15px",
 };
 
-const goBtn: React.CSSProperties = {
-    fontWeight: "bold",
-    cursor: "pointer",
+const goBtn: React.CSSProperties =  {
     position: "absolute",
     left: 50,
-    padding: 6,
-    color: "rgba(0, 123, 123, 0.5)",
-    /* lush modern prominent material design box shadow */
-    textShadow: "0px 1px 1px #fff, 0 0 0 #000, 0px 1px 1px #fff",
-    boxShadow:
-        "0 2px 2px 1px rgba(0, 0, 0, 0.2), 0px 2px 5px rgba(0, 0, 0, 0.2)",
-    borderRadius: 3,
-    // lush modern multi tonal green active engaging fluerescent gradient background
-    background: "linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%)",
-};
+    backgroundColor: '#4CAF50',
+    border: 'none',
+    color: 'white',
+    padding: '8px 16px',
+    textAlign: 'center',
+    textDecoration: 'none',
+    display: 'inline-block',
+    fontSize: '16px',
+    margin: '4px 2px',
+    cursor: 'pointer',
+    borderRadius: '5px',
+}
 
 const readOutStyle: React.CSSProperties = {
     ...labelStyle,
@@ -245,7 +249,7 @@ const readOutStyle: React.CSSProperties = {
 
 interface ReadoutProps {
     canvasRef: CanvasRes;
-    controlRef: ControlRes;
+    controlRef: ControlRef;
     bodyRef: RefObject<RapierRigidBody>;
 }
 function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {

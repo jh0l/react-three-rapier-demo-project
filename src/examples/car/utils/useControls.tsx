@@ -1,12 +1,11 @@
-import { RefObject, useEffect, useRef } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
 import { useDemo } from "../../../App";
 import { mapLinear } from "three/src/math/MathUtils";
-export interface ControlRes {
+export interface ControlRef {
     left: number;
     right: number;
-    auto: boolean;
     commands: {
         queue: [CommandMaker, TriggerMaker][];
         command: Command;
@@ -14,12 +13,20 @@ export interface ControlRes {
     sample: boolean;
 }
 
+export interface ControlState {
+    auto: boolean;
+}
+type StateArr = [
+    ControlState,
+    React.Dispatch<React.SetStateAction<ControlState>>
+];
 export function useControls(canvasRef: RefObject<CanvasRes>) {
+    const stateArr = useState({ auto: false });
+    const [state, setState] = stateArr;
     const idx = useRef({ v: -1 });
-    const ref = useRef<ControlRes>({
+    const ref = useRef<ControlRef>({
         left: 0,
         right: 0,
-        auto: false,
         commands: {
             queue: [
                 [go, timer(300)],
@@ -43,11 +50,11 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
                 [drive(1), timer(790)],
                 [fin, none],
             ],
-            command: () => [0, 0],
+            command: blank,
         },
         sample: false,
     });
-    useKeyboard(ref, idx);
+    useKeyboard(ref, idx, stateArr);
     function nextFn() {
         if (!canvasRef.current) return;
         ref.current.commands.command = ref.current.commands.queue[
@@ -62,7 +69,8 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
         idx.current.v += 1;
     }
     useFrame(() => {
-        const { commands, auto, sample } = ref.current;
+        const { commands, sample } = ref.current;
+        const { auto } = state;
         if (auto && canvasRef.current) {
             if (idx.current.v < 0 && commands.queue.length) {
                 idx.current.v = 0;
@@ -79,7 +87,9 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
                 ref.current.left = output[0];
                 ref.current.right = output[1];
             } else {
-                ref.current.auto = false;
+                idx.current.v = -1;
+                commands.command = blank;
+                setState({ auto: false });
             }
         }
         if (sample) {
@@ -87,7 +97,7 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
         }
     });
 
-    return ref;
+    return [ref, stateArr] as const;
 }
 
 export function useKeyPresses(event: (key: string, b: boolean) => void) {
@@ -121,9 +131,11 @@ const keyMap: KeyMapType<string> = {
 };
 
 function useKeyboard(
-    res: RefObject<ControlRes>,
-    idx: RefObject<{ v: number }>
+    res: RefObject<ControlRef>,
+    idx: RefObject<{ v: number }>,
+    stateArr: StateArr
 ) {
+    const [, setState] = stateArr;
     const demo = useDemo();
     const keys = useRef<KeyMapType<boolean>>({
         forward: false,
@@ -155,7 +167,7 @@ function useKeyboard(
                 reset,
                 paused,
             } = keys.current;
-            // figure out power for left and right wheels based on what keys are pressed
+            // power for left and right wheels based on what keys are pressed
             res.current.left = 0;
             res.current.right = 0;
             if (forward) {
@@ -179,7 +191,9 @@ function useKeyboard(
                 res.current.right = 0;
             }
             if (auto) {
-                res.current.auto = !res.current.auto;
+                setState((s) => ({
+                    auto: !s.auto,
+                }));
                 idx.current.v = -1;
             }
             res.current.sample = sample;
@@ -206,6 +220,8 @@ type Command = () => [number, number];
 interface mapLog {
     (x: number, a1: number, a2: number, b1: number, b2: number): number;
 }
+
+const blank: Command = () => [0, 0];
 
 const quadraticMap: mapLog = (x, a1, a2, b1, b2) => {
     return mapLinear(x, a1, a2, b1, b2);
