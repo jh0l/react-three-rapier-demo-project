@@ -2,20 +2,12 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
 import { useDemo } from "../../../App";
-import { mapLinear } from "three/src/math/MathUtils";
-export interface ControlRef {
-    left: number;
-    right: number;
-    commands: {
-        queue: [CommandMaker, TriggerMaker][];
-        command: Command;
-    };
-    sample: boolean;
-}
+import AutoTraceVehicle from "./autoTraceVehicle";
 
 export interface ControlState {
     auto: boolean;
 }
+
 type StateArr = [
     ControlState,
     React.Dispatch<React.SetStateAction<ControlState>>
@@ -24,75 +16,16 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
     const stateArr = useState({ auto: false });
     const [state, setState] = stateArr;
     const idx = useRef({ v: -1 });
-    const ref = useRef<ControlRef>({
-        left: 0,
-        right: 0,
-        commands: {
-            queue: [
-                [go, timer(300)],
-                [trace, intersection("R")],
-                [stop, timer(10)],
-                [align, timer(500)],
-                [drive(-1), timer(350)],
-                [trace, intersection("R")],
-                [stop, timer(10)],
-                [trace, intersection("T")],
-                [drive(1), timer(800)],
-                [align, timer(500)],
-                [drive(0), timer(100)],
-                [trace, intersection("L")],
-                [stop, timer(10)],
-                [trace, intersection("T")],
-                [stop, timer(10)],
-                [align, timer(500)],
-                [drive(1), timer(350)],
-                [trace, timer(2100)],
-                [drive(1), timer(790)],
-                [fin, none],
-            ],
-            command: blank,
-        },
-        sample: false,
-    });
+    const ref = useRef<AutoTraceVehicle>(
+        new AutoTraceVehicle(canvasRef.current!)
+    );
     useKeyboard(ref, idx, stateArr);
-    function nextFn() {
-        if (!canvasRef.current) return;
-        ref.current.commands.command = ref.current.commands.queue[
-            idx.current.v
-        ][0](
-            ref.current.commands.queue[idx.current.v][1](
-                canvasRef.current,
-                nextFn
-            ),
-            canvasRef
-        );
-        idx.current.v += 1;
-    }
     useFrame(() => {
-        const { commands, sample } = ref.current;
         const { auto } = state;
         if (auto && canvasRef.current) {
-            if (idx.current.v < 0 && commands.queue.length) {
-                idx.current.v = 0;
-                nextFn();
-            }
-            if (idx.current.v < commands.queue.length) {
-                const output = commands.command();
-                for (let i = 0, x; i < output.length; i++) {
-                    x = output[i];
-                    x = Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100));
-                    output[i] = x || 0;
-                }
-                // add dampening rolling average here
-                ref.current.left = output[0];
-                ref.current.right = output[1];
-            } else {
-                idx.current.v = -1;
-                commands.command = blank;
-                setState({ auto: false });
-            }
+            if (!ref.current.run()) setState({ auto: false });
         }
-        if (sample) {
+        if (ref.current.state.sample) {
             console.log(canvasRef.current?.luminance);
         }
     });
@@ -131,7 +64,7 @@ const keyMap: KeyMapType<string> = {
 };
 
 function useKeyboard(
-    res: RefObject<ControlRef>,
+    res: RefObject<AutoTraceVehicle>,
     idx: RefObject<{ v: number }>,
     stateArr: StateArr
 ) {
@@ -168,27 +101,27 @@ function useKeyboard(
                 paused,
             } = keys.current;
             // power for left and right wheels based on what keys are pressed
-            res.current.left = 0;
-            res.current.right = 0;
+            res.current.state.left = 0;
+            res.current.state.right = 0;
             if (forward) {
-                res.current.left += 1;
-                res.current.right += 1;
+                res.current.state.left += 1;
+                res.current.state.right += 1;
             }
             if (backward) {
-                res.current.left -= 1;
-                res.current.right -= 1;
+                res.current.state.left -= 1;
+                res.current.state.right -= 1;
             }
             if (left) {
-                res.current.left -= 1;
-                res.current.right += 1;
+                res.current.state.left -= 1;
+                res.current.state.right += 1;
             }
             if (right) {
-                res.current.left += 1;
-                res.current.right -= 1;
+                res.current.state.left += 1;
+                res.current.state.right -= 1;
             }
             if (brake) {
-                res.current.left = 0;
-                res.current.right = 0;
+                res.current.state.left = 0;
+                res.current.state.right = 0;
             }
             if (auto) {
                 setState((s) => ({
@@ -196,7 +129,7 @@ function useKeyboard(
                 }));
                 idx.current.v = -1;
             }
-            res.current.sample = sample;
+            res.current.state.sample = sample;
             if (reset && demo.resetPhysics && demo.setPaused) {
                 console.log("reset");
                 demo.resetPhysics();
@@ -208,161 +141,3 @@ function useKeyboard(
         }
     });
 }
-
-type CommandMakerMaker<P> = (p: P) => CommandMaker;
-
-type CommandMaker = (
-    nextTrigger: () => boolean,
-    can: RefObject<CanvasRes>
-) => Command;
-
-type Command = () => [number, number];
-interface mapLog {
-    (x: number, a1: number, a2: number, b1: number, b2: number): number;
-}
-
-const blank: Command = () => [0, 0];
-
-const quadraticMap: mapLog = (x, a1, a2, b1, b2) => {
-    return mapLinear(x, a1, a2, b1, b2);
-};
-
-type Trigger = () => boolean;
-type TriggerMaker = (can: CanvasRes, next: () => void) => Trigger;
-type TriggerMakerMaker<T> = (p: T) => TriggerMaker;
-
-const none: TriggerMaker = () => () => false;
-
-// TODO use TriggerMaker to customize intersection to use different intersection types
-const intersection: TriggerMakerMaker<"R" | "L" | "T"> =
-    (lock) => (can: CanvasRes, next) => {
-        return () => {
-            if (!can) return false;
-            const { top, bot, rgt, lft } = can.luminance.keys();
-            const arr =
-                lock === "R"
-                    ? [rgt, top, bot]
-                    : lock === "L"
-                    ? [lft, top, bot]
-                    : [bot, rgt, lft];
-            const res = arr.every((x) => x < 0.45);
-            if (res) {
-                next();
-                return true;
-            }
-            return false;
-        };
-    };
-
-const go: CommandMaker = (trigger) => {
-    return () => {
-        if (trigger()) {
-            return [0, 0];
-        }
-        return [1, 1];
-    };
-};
-
-const trace: CommandMaker = (trigger, canRef) => {
-    return () => {
-        if (!canRef.current) return [0, 0];
-        const can = canRef.current;
-        if (trigger()) {
-            return [0, 0];
-        }
-        let LEFT = 1,
-            RIGHT = 1;
-        // reduce power of left or right depending of ratio of left sensor to right sensor
-        const { lft, rgt } = can.luminance.keys();
-        const turnRaw = Math.min(lft, rgt) / Math.max(lft, rgt);
-        const turn = quadraticMap(turnRaw, 0, 1, -1, 1);
-        if (lft > rgt) {
-            RIGHT = turn;
-        } else if (rgt > lft) {
-            LEFT = turn;
-        }
-        return [LEFT, RIGHT];
-    };
-};
-
-// turn the wheels in opposing directions by ratio until left and right sensors reach
-// equalibrium
-const align: CommandMaker = (trigger, canRef) => {
-    return () => {
-        if (!canRef.current) return [0, 0];
-        const can = canRef.current;
-        let LEFT = 0,
-            RIGHT = 0;
-        const { lft, rgt } = can.luminance.keys();
-        const turn = Math.max(lft, rgt) - Math.min(lft, rgt);
-        LEFT = RIGHT = turn;
-        if (lft > rgt) {
-            RIGHT = -turn;
-        } else if (rgt > lft) {
-            LEFT = -turn;
-        }
-        if (turn < 0.1) trigger();
-        return [LEFT, RIGHT];
-    };
-};
-
-const timer: TriggerMakerMaker<number> = (ms) => {
-    return (_, next) => {
-        const state = { started: false, time: Infinity };
-        return () => {
-            if (!state.started) {
-                state.started = true;
-                state.time = Date.now() + ms;
-            } else if (state.time < Date.now()) {
-                next();
-                return true;
-            }
-            return false;
-        };
-    };
-};
-
-const stop: CommandMaker = (trigger) => {
-    return () => {
-        trigger();
-        return [0, 0];
-    };
-};
-
-const fin: CommandMaker = (trigger) => {
-    return () => {
-        trigger();
-        console.log("DONE");
-        return [0, 0];
-    };
-};
-
-// const aligned: Trigger = (can?: CanvasRes) => {
-//     if (!can) return false;
-//     const { top, bot, lft, rgt } = can.luminance.keys();
-//     const res =
-//         [top, bot].every((x) => x < 0.1) && [lft, rgt].every((x) => x > 0.9);
-//     if (res) debugger;
-//     return res;
-// };
-
-// drive the wheels with a degree of turning: 0 = straight, -1 = full turn left, 1 = full turn right
-type DriveParam = number;
-const drive: CommandMakerMaker<DriveParam> = (degrees) => (trigger, canRef) => {
-    return () => {
-        if (!canRef.current) return [0, 0];
-        if (trigger()) {
-            return [0, 0];
-        }
-        let LEFT = 1,
-            RIGHT = 1;
-        // reduce power of left or right depending on degrees turn
-        if (degrees < 0) {
-            RIGHT = degrees;
-        } else if (degrees > 0) {
-            LEFT = -degrees;
-        }
-
-        return [LEFT, RIGHT];
-    };
-};

@@ -8,7 +8,7 @@ import {
 } from "@react-three/rapier";
 import { createRef, RefObject, useEffect, useRef, useState } from "react";
 import { Demo } from "../../App";
-import { ControlRef, useControls } from "./utils/useControls";
+import { useControls } from "./utils/useControls";
 import {
     MAP_ASP,
     MAP_SCALE,
@@ -16,6 +16,7 @@ import {
     CanvasRes as CanvasRes,
 } from "./utils/useCanvasMap";
 import * as THREE from "three";
+import AutoTraceVehicle from "./utils/autoTraceVehicle";
 
 const WHEEL_VEL = 20;
 const WHEEL_FAC = 100;
@@ -33,7 +34,7 @@ const WheelJoint = ({
     bodyAnchor: Vector3Array;
     wheelAnchor: Vector3Array;
     rotationAxis: Vector3Array;
-    controls: RefObject<ControlRef>;
+    controls: RefObject<AutoTraceVehicle>;
     side: "left" | "right";
 }) => {
     const joint = useRevoluteJoint(body, wheel, [
@@ -45,7 +46,7 @@ const WheelJoint = ({
     useFrame(() => {
         if (joint.current && controls.current) {
             joint.current.configureMotorVelocity(
-                controls.current[side] * WHEEL_VEL,
+                controls.current.state[side] * WHEEL_VEL,
                 WHEEL_FAC
             );
         }
@@ -90,7 +91,7 @@ export const Car: Demo = () => {
                 floatBoxesColorRef.current[i].current?.color.setRGB(v, v, v);
             }
         }
-        if (canvasRef.current.luminance.get(0) && kbRef.current.sample) {
+        if (canvasRef.current.luminance.get(0) && kbRef.current.state.sample) {
             const v = canvasRef.current.luminance;
             console.log(v);
             console.log(canvasRef.current.luminance);
@@ -221,21 +222,21 @@ const labelStyle: React.CSSProperties = {
     top: "-15px",
 };
 
-const goBtn: React.CSSProperties =  {
+const goBtn: React.CSSProperties = {
     position: "absolute",
     left: 50,
-    backgroundColor: '#4CAF50',
-    border: 'none',
-    color: 'white',
-    padding: '8px 16px',
-    textAlign: 'center',
-    textDecoration: 'none',
-    display: 'inline-block',
-    fontSize: '16px',
-    margin: '4px 2px',
-    cursor: 'pointer',
-    borderRadius: '5px',
-}
+    backgroundColor: "#4CAF50",
+    border: "none",
+    color: "white",
+    padding: "8px 16px",
+    textAlign: "center",
+    textDecoration: "none",
+    display: "inline-block",
+    fontSize: "16px",
+    margin: "4px 2px",
+    cursor: "pointer",
+    borderRadius: "5px",
+};
 
 const readOutStyle: React.CSSProperties = {
     ...labelStyle,
@@ -249,7 +250,7 @@ const readOutStyle: React.CSSProperties = {
 
 interface ReadoutProps {
     canvasRef: CanvasRes;
-    controlRef: ControlRef;
+    controlRef: AutoTraceVehicle;
     bodyRef: RefObject<RapierRigidBody>;
 }
 function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
@@ -263,9 +264,10 @@ function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
                     v.toFixed(1).padEnd(5, " ")
                 );
                 const loc = `V: x${xs} y${ys} z${zs}\n`;
-                const [LW, RW] = [controlRef.left, controlRef.right].map((x) =>
-                    String(x).padEnd(4, " ")
-                );
+                const [LW, RW] = [
+                    controlRef.state.left,
+                    controlRef.state.right,
+                ].map((x) => String(x).padEnd(4, " "));
                 let LR = `LW:${LW} RW:${RW}\n`;
                 const [T, L, B, R] = canvasRef.luminance.map((x) =>
                     String(x).padEnd(4, " ")
