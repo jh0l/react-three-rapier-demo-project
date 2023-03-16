@@ -88,12 +88,15 @@ export default class AutoTraceVehicle {
             this.state.right = right;
         } else {
             // reset
-            cmds.idx = -1;
-            cmds.command = blank;
-            this.state.record = new Array(2000);
+            this.reset();
             return false;
         }
         return true;
+    }
+    reset() {
+        cmds.idx = -1;
+        cmds.command = blank;
+        this.state.record = new Array(2000);
     }
 
     processSteering([left, right]: [number, number]) {

@@ -15,11 +15,10 @@ type StateArr = [
 export function useControls(canvasRef: RefObject<CanvasRes>) {
     const stateArr = useState({ auto: false });
     const [state, setState] = stateArr;
-    const idx = useRef({ v: -1 });
     const ref = useRef<AutoTraceVehicle>(
         new AutoTraceVehicle(canvasRef.current!)
     );
-    useKeyboard(ref, idx, stateArr);
+    useKeyboard(ref, stateArr);
     useFrame(() => {
         const { auto } = state;
         if (auto && canvasRef.current) {
@@ -63,11 +62,7 @@ const keyMap: KeyMapType<string> = {
     p: "paused",
 };
 
-function useKeyboard(
-    res: RefObject<AutoTraceVehicle>,
-    idx: RefObject<{ v: number }>,
-    stateArr: StateArr
-) {
+function useKeyboard(res: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
     const [, setState] = stateArr;
     const demo = useDemo();
     const keys = useRef<KeyMapType<boolean>>({
@@ -82,12 +77,7 @@ function useKeyboard(
         sample: false,
     });
     useKeyPresses((key, b) => {
-        if (
-            key in keyMap &&
-            keyMap[key] in keys.current &&
-            res.current &&
-            idx.current
-        ) {
+        if (key in keyMap && keyMap[key] in keys.current && res.current) {
             keys.current[keyMap[key]] = b;
             const {
                 forward,
@@ -127,7 +117,7 @@ function useKeyboard(
                 setState((s) => ({
                     auto: !s.auto,
                 }));
-                idx.current.v = -1;
+                res.current.reset();
             }
             res.current.state.sample = sample;
             if (reset && demo.resetPhysics && demo.setPaused) {
