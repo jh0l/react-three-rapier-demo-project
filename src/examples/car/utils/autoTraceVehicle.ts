@@ -34,25 +34,24 @@ export default class AutoTraceVehicle {
             cmds: {
                 queue: [
                     [go, timer(300)],
-                    // [trace, intersection("R")],
-                    // [stop, timer(10)],
-                    // [align, timer(500)],
-                    // [drive(-1), timer(350)],
-                    // [trace, intersection("R")],
-                    // [stop, timer(10)],
-                    // [trace, intersection("T")],
-                    // [drive(1), timer(800)],
-                    // [align, timer(500)],
-                    // [drive(0), timer(100)],
-                    // [trace, intersection("L")],
-                    // [stop, timer(10)],
-                    // [trace, intersection("T")],
-                    // [stop, timer(10)],
-                    // [align, timer(500)],
-                    // [drive(1), timer(350)],
-                    // [trace, timer(2200)],
+                    [trace, intersection("R")],
+                    [stop, timer(10)],
+                    [align, timer(500)],
+                    [drive(-1), timer(350)],
+                    [trace, intersection("R")],
+                    [stop, timer(10)],
+                    [trace, intersection("T")],
+                    [drive(1), timer(800)],
+                    [align, timer(500)],
+                    [drive(0), timer(100)],
+                    [trace, intersection("L")],
+                    [stop, timer(10)],
+                    [trace, intersection("T")],
+                    [stop, timer(10)],
+                    [align, timer(500)],
+                    [drive(1), timer(350)],
+                    [trace, timer(2200)],
                     [drive(1), timer(790)],
-                    [drive(-1), timer(790)],
                     [stop, done],
                 ],
                 command: blank,
@@ -94,6 +93,7 @@ export default class AutoTraceVehicle {
         return true;
     }
     reset() {
+        const { cmds } = this.state;
         cmds.idx = -1;
         cmds.command = blank;
         this.state.record = new Array(2000);
@@ -108,11 +108,11 @@ export default class AutoTraceVehicle {
             left,
             right,
         });
-        const slice = record.slice(-2);
-        left = slice.reduce((a, b) => a + b.raw.left, 0) / slice.length;
-        right = slice.reduce((a, b) => a + b.raw.right, 0) / slice.length;
-        record[record.length - 1].left = left;
-        record[record.length - 1].right = right;
+        // const slice = record.slice(-2);
+        // left = slice.reduce((a, b) => a + b.raw.left, 0) / slice.length;
+        // right = slice.reduce((a, b) => a + b.raw.right, 0) / slice.length;
+        // record[record.length - 1].left = left;
+        // record[record.length - 1].right = right;
         return [left, right];
     }
 
@@ -126,15 +126,9 @@ type CommandMakerMaker<P> = (p: P) => CommandMaker;
 type CommandMaker = (nextTrigger: () => boolean, can: CanvasRes) => Command;
 
 type Command = () => [number, number];
-interface mapLog {
-    (x: number, a1: number, a2: number, b1: number, b2: number): number;
-}
+
 
 const blank: Command = () => [0, 0];
-
-const quadraticMap: mapLog = (x, a1, a2, b1, b2) => {
-    return mapLinear(x, a1, a2, b1, b2);
-};
 
 type Trigger = () => boolean;
 type TriggerMaker = (next: () => void, can: CanvasRes) => Trigger;
@@ -172,7 +166,10 @@ const go: CommandMaker = (trigger) => {
         return [1, 1];
     };
 };
-
+// what is wrong with my code, it controls a line following bot. the line is made up of a black line with a white line on either side. These three lines are even thickness. The code works but on straights the bot sometimes zigzags and oversteers. Here's the code:
+// trace returns function that runs every 16ms keeping the robot in the centre of the black line surrounded by two white lines all lines are equal thickness
+// can is onject that contains brightness values for left and riight side sensors
+// trigger is 
 const trace: CommandMaker = (trigger, can) => {
     return () => {
         if (trigger()) {
@@ -183,7 +180,8 @@ const trace: CommandMaker = (trigger, can) => {
         // reduce power of left or right depending of ratio of left sensor to right sensor
         const { lft, rgt } = can.luminance.keys();
         const turnRaw = Math.min(lft, rgt) / Math.max(lft, rgt);
-        const turn = quadraticMap(turnRaw, 0, 1, -1, 1);
+        // b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 )
+        const turn = mapLinear(turnRaw, 0, 1, -1, 1);
         if (lft > rgt) {
             RIGHT = turn;
         } else if (rgt > lft) {
