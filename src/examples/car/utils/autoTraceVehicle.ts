@@ -11,7 +11,7 @@ interface ControlFrame {
 }
 
 interface State {
-    autoRecord: ControlFrame[];
+    record: ControlFrame[];
     left: number;
     right: number;
     cmds: {
@@ -28,31 +28,32 @@ export default class AutoTraceVehicle {
     constructor(can: CanvasRes) {
         this.can = can;
         this.state = {
-            autoRecord: new Array(2000),
+            record: new Array(2000),
             left: 0,
             right: 0,
             cmds: {
                 queue: [
                     [go, timer(300)],
-                    [trace, intersection("R")],
-                    [stop, timer(10)],
-                    [align, timer(500)],
-                    [drive(-1), timer(350)],
-                    [trace, intersection("R")],
-                    [stop, timer(10)],
-                    [trace, intersection("T")],
-                    [drive(1), timer(800)],
-                    [align, timer(500)],
-                    [drive(0), timer(100)],
-                    [trace, intersection("L")],
-                    [stop, timer(10)],
-                    [trace, intersection("T")],
-                    [stop, timer(10)],
-                    [align, timer(500)],
-                    [drive(1), timer(350)],
-                    [trace, timer(2100)],
+                    // [trace, intersection("R")],
+                    // [stop, timer(10)],
+                    // [align, timer(500)],
+                    // [drive(-1), timer(350)],
+                    // [trace, intersection("R")],
+                    // [stop, timer(10)],
+                    // [trace, intersection("T")],
+                    // [drive(1), timer(800)],
+                    // [align, timer(500)],
+                    // [drive(0), timer(100)],
+                    // [trace, intersection("L")],
+                    // [stop, timer(10)],
+                    // [trace, intersection("T")],
+                    // [stop, timer(10)],
+                    // [align, timer(500)],
+                    // [drive(1), timer(350)],
+                    // [trace, timer(2200)],
                     [drive(1), timer(790)],
-                    [fin, none],
+                    [drive(-1), timer(790)],
+                    [stop, done],
                 ],
                 command: blank,
                 idx: -1,
@@ -63,7 +64,7 @@ export default class AutoTraceVehicle {
     nextCommand() {
         const { cmds } = this.state;
         cmds.command = cmds.queue[cmds.idx][0](
-            cmds.queue[cmds.idx][1](this.can, () => this.nextCommand()),
+            cmds.queue[cmds.idx][1](() => this.nextCommand(), this.can),
             this.can
         );
         cmds.idx += 1;
@@ -81,22 +82,35 @@ export default class AutoTraceVehicle {
         }
         if (cmds.idx < cmds.queue.length) {
             // run current command and apply (cleaned) output
-            const [left, right] = cmds.command().map(AutoTraceVehicle.cleanOut);
+            const rawOutput = cmds.command();
+            const [left, right] = this.processSteering(rawOutput);
             this.state.left = left;
             this.state.right = right;
-            this.state.autoRecord.push({
-                raw: { left, right },
-                left,
-                right,
-            });
         } else {
             // reset
             cmds.idx = -1;
             cmds.command = blank;
-            this.state.autoRecord = new Array(2000);
+            this.state.record = new Array(2000);
             return false;
         }
         return true;
+    }
+
+    processSteering([left, right]: [number, number]) {
+        const { record: record } = this.state;
+        left = AutoTraceVehicle.cleanOut(left);
+        right = AutoTraceVehicle.cleanOut(right);
+        record.push({
+            raw: { left, right },
+            left,
+            right,
+        });
+        const slice = record.slice(-2);
+        left = slice.reduce((a, b) => a + b.raw.left, 0) / slice.length;
+        right = slice.reduce((a, b) => a + b.raw.right, 0) / slice.length;
+        record[record.length - 1].left = left;
+        record[record.length - 1].right = right;
+        return [left, right];
     }
 
     static cleanOut(x: number): number {
@@ -120,15 +134,17 @@ const quadraticMap: mapLog = (x, a1, a2, b1, b2) => {
 };
 
 type Trigger = () => boolean;
-type TriggerMaker = (can: CanvasRes, next: () => void) => Trigger;
+type TriggerMaker = (next: () => void, can: CanvasRes) => Trigger;
 type TriggerMakerMaker<T> = (p: T) => TriggerMaker;
 
-const none: TriggerMaker = () => () => false;
+const done: TriggerMaker = (next) => () => {
+    next();
+    return true;
+};
 
 const intersection: TriggerMakerMaker<"R" | "L" | "T"> =
-    (lock) => (can: CanvasRes, next) => {
+    (lock) => (next, can: CanvasRes) => {
         return () => {
-            if (!can) return false;
             const { top, bot, rgt, lft } = can.luminance.keys();
             const arr =
                 lock === "R"
@@ -194,7 +210,7 @@ const align: CommandMaker = (trigger, can) => {
 };
 
 const timer: TriggerMakerMaker<number> = (ms) => {
-    return (_, next) => {
+    return (next) => {
         const state = { started: false, time: Infinity };
         return () => {
             if (!state.started) {
@@ -215,23 +231,6 @@ const stop: CommandMaker = (trigger) => {
         return [0, 0];
     };
 };
-
-const fin: CommandMaker = (trigger) => {
-    return () => {
-        trigger();
-        console.log("DONE");
-        return [0, 0];
-    };
-};
-
-// const aligned: Trigger = (can?: CanvasRes) => {
-//     if (!can) return false;
-//     const { top, bot, lft, rgt } = can.luminance.keys();
-//     const res =
-//         [top, bot].every((x) => x < 0.1) && [lft, rgt].every((x) => x > 0.9);
-//     if (res) debugger;
-//     return res;
-// };
 
 // drive the wheels with a degree of turning: 0 = straight, -1 = full turn left, 1 = full turn right
 type DriveParam = number;
