@@ -139,7 +139,7 @@ const done: TriggerMaker = (next) => () => {
     return true;
 };
 
-const none: TriggerMaker = () => () => false;
+//const none: TriggerMaker = () => () => false;
 
 const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I"> =
     (lock) => (next, can: CanvasRes) => {
