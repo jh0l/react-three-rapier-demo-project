@@ -18,8 +18,6 @@ import {
 import * as THREE from "three";
 import AutoTraceVehicle from "./utils/autoTraceVehicle";
 
-const WHEEL_VEL = 20;
-const WHEEL_FAC = 100;
 const WheelJoint = ({
     body,
     wheel,
@@ -55,18 +53,21 @@ const WheelJoint = ({
     return null;
 };
 
+const WHEEL_VEL = 14;
+const WHEEL_FAC = 90;
 export const Car: Demo = () => {
     const bodyRef = useRef<RapierRigidBody>(null);
     const wheelPositions: [number, number, number][] = [
-        [1, 0, 3],
-        [1, 0, -3],
+        [2.1, -0.5, 3.3],
+        [2.1, -0.5, -3.3],
     ];
     const sensorPositions: [number, number, number][] = [
-        [-2.5, 2, 0],
+        [-2.6, 2, 0],
         [1, 0, 1],
         [2, 0, 0],
         [1, 0, -1],
     ];
+    const WHEEL = 1.5;
     const indexSides = ["left", "right"] as const;
     const floatyBoxesRef = useRef(
         sensorPositions.map(() => createRef<THREE.Mesh>())
@@ -158,7 +159,7 @@ export const Car: Demo = () => {
                         ))}
                     </Box>
                     <Box
-                        scale={[6.5, 1, 4]}
+                        scale={[10, 2, 4.5]}
                         castShadow
                         receiveShadow
                         name="chassis"
@@ -177,7 +178,7 @@ export const Car: Demo = () => {
                     >
                         <Cylinder
                             rotation={[Math.PI / 2, 0, 0]}
-                            args={[1, 1, 1, 32]}
+                            args={[WHEEL, WHEEL, WHEEL, 32]}
                             castShadow
                             receiveShadow
                         >

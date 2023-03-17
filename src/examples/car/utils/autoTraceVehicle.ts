@@ -127,7 +127,6 @@ type CommandMaker = (nextTrigger: () => boolean, can: CanvasRes) => Command;
 
 type Command = () => [number, number];
 
-
 const blank: Command = () => [0, 0];
 
 type Trigger = () => boolean;
@@ -138,6 +137,8 @@ const done: TriggerMaker = (next) => () => {
     next();
     return true;
 };
+
+const none: TriggerMaker = () => () => false;
 
 const intersection: TriggerMakerMaker<"R" | "L" | "T"> =
     (lock) => (next, can: CanvasRes) => {
@@ -166,10 +167,11 @@ const go: CommandMaker = (trigger) => {
         return [1, 1];
     };
 };
-// what is wrong with my code, it controls a line following bot. the line is made up of a black line with a white line on either side. These three lines are even thickness. The code works but on straights the bot sometimes zigzags and oversteers. Here's the code:
-// trace returns function that runs every 16ms keeping the robot in the centre of the black line surrounded by two white lines all lines are equal thickness
-// can is onject that contains brightness values for left and riight side sensors
-// trigger is 
+
+// There is a path that is made up of a black line with a white line on either side. These three lines are even thickness.
+// trace returns function that runs every 16ms keeping the robot in the centre of the black line surrounded by two white lines all lines are equal thickness by measuring the brightness of the left and right sensors and the augmented ratio of the darker sensor (lower value) against the lighter sensor (higher value).
+// can is onject that contains brightness values for left and right side sensors
+// trigger is a function that returns true when the command shouldn't be run by the vehicle anymore.
 const trace: CommandMaker = (trigger, can) => {
     return () => {
         if (trigger()) {
@@ -181,6 +183,7 @@ const trace: CommandMaker = (trigger, can) => {
         const { lft, rgt } = can.luminance.keys();
         const turnRaw = Math.min(lft, rgt) / Math.max(lft, rgt);
         // b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 )
+        // experiment with range of -1.5 to 1
         const turn = mapLinear(turnRaw, 0, 1, -1, 1);
         if (lft > rgt) {
             RIGHT = turn;
