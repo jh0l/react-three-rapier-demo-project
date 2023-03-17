@@ -37,11 +37,12 @@ export default class AutoTraceVehicle {
                     [trace, intersection("R")],
                     [stop, timer(10)],
                     [align, timer(500)],
-                    [drive(-1), timer(350)],
+                    [drive(-1), timer(380)],
                     [trace, intersection("R")],
                     [stop, timer(10)],
                     [trace, intersection("T")],
                     [drive(1), timer(800)],
+                    [drive(1), intersection("I")],
                     [align, timer(500)],
                     [drive(0), timer(100)],
                     [trace, intersection("L")],
@@ -50,8 +51,8 @@ export default class AutoTraceVehicle {
                     [stop, timer(10)],
                     [align, timer(500)],
                     [drive(1), timer(350)],
-                    [trace, timer(2200)],
-                    [drive(1), timer(790)],
+                    [trace, timer(2300)],
+                    [drive(1), timer(1120)],
                     [stop, done],
                 ],
                 command: blank,
@@ -140,17 +141,21 @@ const done: TriggerMaker = (next) => () => {
 
 const none: TriggerMaker = () => () => false;
 
-const intersection: TriggerMakerMaker<"R" | "L" | "T"> =
+const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I"> =
     (lock) => (next, can: CanvasRes) => {
         return () => {
             const { top, bot, rgt, lft } = can.luminance.keys();
-            const arr =
+            const [dark, light] =
                 lock === "R"
-                    ? [rgt, top, bot]
+                    ? [[rgt, top, bot],[]]
                     : lock === "L"
-                    ? [lft, top, bot]
-                    : [bot, rgt, lft];
-            const res = arr.every((x) => x < 0.45);
+                    ? [[lft, top, bot],[]]
+                    : lock === "T"
+                    ? [[bot, rgt, lft],[]]
+                    : lock === "I"
+                    ? [[top, bot],[lft, rgt]]
+                    : [[],[]];
+            const res = dark.every((x) => x < 0.45) && light.every(x => x > 0.75);
             if (res) {
                 next();
                 return true;
@@ -208,7 +213,7 @@ const align: CommandMaker = (trigger, can) => {
         } else if (rgt > lft) {
             LEFT = -turn;
         }
-        if (turn < 0.15) trigger();
+        if (turn < 0.2) trigger();
         return [LEFT, RIGHT];
     };
 };
