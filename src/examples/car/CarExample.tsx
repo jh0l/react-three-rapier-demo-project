@@ -274,7 +274,8 @@ function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
                     String(x).padEnd(4, " ")
                 );
                 let LUM = `T:${T} L:${L}\nB:${B} R:${R}`;
-                setData(loc + LR + LUM);
+                let frame = `F: ${controlRef.state.tick}`;
+                setData(loc + LR + LUM + frame);
             }
         }, 100);
         return () => {

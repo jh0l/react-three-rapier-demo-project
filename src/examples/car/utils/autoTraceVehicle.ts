@@ -20,6 +20,7 @@ interface State {
         idx: number;
     };
     sample: boolean;
+    tick: number;
 }
 
 export default class AutoTraceVehicle {
@@ -59,13 +60,19 @@ export default class AutoTraceVehicle {
                 idx: -1,
             },
             sample: false,
+            tick: 0,
         };
     }
     nextCommand() {
         const { cmds } = this.state;
         cmds.command = cmds.queue[cmds.idx][0](
-            cmds.queue[cmds.idx][1](() => this.nextCommand(), this.can),
-            this.can
+            cmds.queue[cmds.idx][1](
+                () => this.nextCommand(),
+                this.can,
+                this.state
+            ),
+            this.can,
+            this.state
         );
         cmds.idx += 1;
     }
@@ -86,6 +93,7 @@ export default class AutoTraceVehicle {
             const [left, right] = this.processSteering(rawOutput);
             this.state.left = left;
             this.state.right = right;
+            this.state.tick += 1;
         } else {
             // reset
             this.reset();
@@ -98,22 +106,12 @@ export default class AutoTraceVehicle {
         cmds.idx = -1;
         cmds.command = blank;
         this.state.record = new Array(2000);
+        this.state.tick = 0;
     }
 
     processSteering([left, right]: [number, number]) {
-        const { record: record } = this.state;
         left = AutoTraceVehicle.cleanOut(left);
         right = AutoTraceVehicle.cleanOut(right);
-        record.push({
-            raw: { left, right },
-            left,
-            right,
-        });
-        // const slice = record.slice(-2);
-        // left = slice.reduce((a, b) => a + b.raw.left, 0) / slice.length;
-        // right = slice.reduce((a, b) => a + b.raw.right, 0) / slice.length;
-        // record[record.length - 1].left = left;
-        // record[record.length - 1].right = right;
         return [left, right];
     }
 
@@ -124,14 +122,18 @@ export default class AutoTraceVehicle {
 
 type CommandMakerMaker<P> = (p: P) => CommandMaker;
 
-type CommandMaker = (nextTrigger: () => boolean, can: CanvasRes) => Command;
+type CommandMaker = (
+    nextTrigger: Trigger,
+    can: CanvasRes,
+    ref: State
+) => Command;
 
 type Command = () => [number, number];
 
 const blank: Command = () => [0, 0];
 
 type Trigger = () => boolean;
-type TriggerMaker = (next: () => void, can: CanvasRes) => Trigger;
+type TriggerMaker = (next: () => void, can: CanvasRes, ref: State) => Trigger;
 type TriggerMakerMaker<T> = (p: T) => TriggerMaker;
 
 const done: TriggerMaker = (next) => () => {
@@ -147,15 +149,19 @@ const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I"> =
             const { top, bot, rgt, lft } = can.luminance.keys();
             const [dark, light] =
                 lock === "R"
-                    ? [[rgt, top, bot],[]]
+                    ? [[rgt, top, bot], []]
                     : lock === "L"
-                    ? [[lft, top, bot],[]]
+                    ? [[lft, top, bot], []]
                     : lock === "T"
-                    ? [[bot, rgt, lft],[]]
+                    ? [[bot, rgt, lft], []]
                     : lock === "I"
-                    ? [[top, bot],[lft, rgt]]
-                    : [[],[]];
-            const res = dark.every((x) => x < 0.45) && light.every(x => x > 0.75);
+                    ? [
+                          [top, bot],
+                          [lft, rgt],
+                      ]
+                    : [[], []];
+            const res =
+                dark.every((x) => x < 0.45) && light.every((x) => x > 0.75);
             if (res) {
                 next();
                 return true;
@@ -217,15 +223,19 @@ const align: CommandMaker = (trigger, can) => {
         return [LEFT, RIGHT];
     };
 };
-
+// ms per frame TODO: get better ticks
+const MPF = 60 / 1000;
 const timer: TriggerMakerMaker<number> = (ms) => {
-    return (next) => {
-        const state = { started: false, time: Infinity };
+    return (next, _, refState) => {
+        const state = { started: false, time: 0 };
         return () => {
+            const { tick } = refState;
+            console.log(tick);
             if (!state.started) {
                 state.started = true;
-                state.time = Date.now() + ms;
-            } else if (state.time < Date.now()) {
+                state.time = tick + ms / MPF;
+                console.log(state.time, ms / MPF);
+            } else if (state.time < tick) {
                 next();
                 return true;
             }
