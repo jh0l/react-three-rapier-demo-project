@@ -91,7 +91,7 @@ export const App = () => {
             }}
         >
             <Suspense fallback="Loading...">
-                <Canvas shadows>
+                <Canvas>
                     <OrbitControls enabled={cameraEnabled} />
                     <OrthographicCamera
                         makeDefault

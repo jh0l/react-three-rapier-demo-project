@@ -1,6 +1,7 @@
 import { Box, Cylinder, Html, Image } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
+    interactionGroups,
     RapierRigidBody,
     RigidBody,
     useRevoluteJoint,
@@ -53,6 +54,12 @@ const WheelJoint = ({
     return null;
 };
 
+// technically the floor is a member of all collision groups by default, but we
+// want to pretend it's in 0 just so BODY and WHEEL don't interact.
+const FLOOR_COL_GROUP = 0;
+const BODY_COL_GROUP = 1;
+const WHEEL_COL_GROUP = 2;
+
 const WHEEL_VEL = 14;
 const WHEEL_FAC = 90;
 export const Car: Demo = () => {
@@ -67,7 +74,7 @@ export const Car: Demo = () => {
         [2, 0, 0],
         [1, 0, -1],
     ];
-    const WHEEL = 1.5;
+    const WHEEL = 1.35;
     const indexSides = ["left", "right"] as const;
     const floatyBoxesRef = useRef(
         sensorPositions.map(() => createRef<THREE.Mesh>())
@@ -114,6 +121,9 @@ export const Car: Demo = () => {
                     type="dynamic"
                     canSleep={false}
                     friction={0}
+                    collisionGroups={interactionGroups(BODY_COL_GROUP, [
+                        FLOOR_COL_GROUP,
+                    ])}
                 >
                     <Box
                         ref={floatyBoxesRef.current[0]}
@@ -134,10 +144,8 @@ export const Car: Demo = () => {
                                 </div>
                             )}
                         </Html>
-                        <meshPhysicalMaterial
+                        <meshStandardMaterial
                             color={"red"}
-                            metalness={1}
-                            reflectivity={0}
                             ref={floatBoxesColorRef.current[0]}
                         />
                         {floatyBoxesRef.current.slice(1).map((ref, index) => (
@@ -149,38 +157,33 @@ export const Car: Demo = () => {
                                 <Html>
                                     <div style={labelStyle}>{index + 1}</div>
                                 </Html>
-                                <meshPhysicalMaterial
+                                <meshStandardMaterial
                                     color={"red"}
                                     metalness={1}
-                                    reflectivity={0}
                                     ref={floatBoxesColorRef.current[index + 1]}
                                 />
                             </Box>
                         ))}
                     </Box>
-                    <Box
-                        scale={[10, 2, 4.5]}
-                        castShadow
-                        receiveShadow
-                        name="chassis"
-                    >
-                        <meshStandardMaterial color={"red"} />
+                    <Box scale={[12, 2, 8]} name="chassis">
+                        <meshStandardMaterial color={"blue"} />
                     </Box>
                 </RigidBody>
                 {wheelPositions.map((wheelPosition, index) => (
                     <RigidBody
                         position={wheelPosition}
-                        colliders="hull"
+                        colliders="ball"
                         type="dynamic"
                         key={index}
                         ref={wheelRefs.current[index]}
                         friction={2}
+                        collisionGroups={interactionGroups(WHEEL_COL_GROUP, [
+                            FLOOR_COL_GROUP,
+                        ])}
                     >
                         <Cylinder
                             rotation={[Math.PI / 2, 0, 0]}
-                            args={[WHEEL, WHEEL, WHEEL, 32]}
-                            castShadow
-                            receiveShadow
+                            args={[WHEEL, WHEEL, WHEEL, 16]}
                         >
                             <meshStandardMaterial color={"grey"} />
                         </Cylinder>

@@ -35,30 +35,33 @@ export default class AutoTraceVehicle {
             cmds: {
                 queue: [
                     [go, timer(20)],
-                    [trace, intersection("R")],
+                    [trace(0.8), intersection("R")],
                     [stop, timer(5)],
                     [align, timer(10)],
                     [drive([0]), timer(5)],
                     [drive([-1]), timer(15)],
                     [drive([-1, 0.5]), intersection("I")],
-                    [trace, intersection("R")],
+                    [trace(), intersection("R")],
                     [stop, timer(3)],
-                    [trace, intersection("T")],
-                    [drive([-0.5]), timer(5)],
-                    [drive([1]), timer(55)],
+                    [trace(), intersection("T")],
+                    [drive([-1, 0.5]), timer(40)],
+                    [drive([0, 0.5]), timer(30)],
+                    [drive([1, 0.5]), timer(40)],
+                    [drive([0, -0.5]), timer(40)],
+                    [drive([1, 0.9]), timer(58)],
                     [drive([1, 0.5]), intersection("I")],
-                    [align, timer(10)],
-                    [drive([0]), timer(10)],
-                    [trace, intersection("L")],
+                    [align, timer(15)],
+                    [drive([0, 0.8]), timer(10)],
+                    [trace(), intersection("L")],
                     [stop, timer(3)],
-                    [trace, intersection("T")],
+                    [trace(), intersection("T")],
                     [drive([0]), timer(3)],
-                    [drive([1]), timer(12)],
+                    [drive([1]), timer(15)],
                     [drive([1, 0.5]), intersection("I")],
                     [align, timer(10)],
-                    [trace, intersection("W")],
-                    [drive([0]), timer(30)],
-                    [drive([1]), timer(68)],
+                    [trace(), intersection("W")],
+                    [drive([0]), timer(33)],
+                    [drive([1, 0.55]), timer(182)],
                     [stop, done],
                 ],
                 command: blank,
@@ -168,7 +171,7 @@ const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I" | "W"> =
                     ? [[], [top, bot, rgt, lft]]
                     : [[], []];
             const res =
-                dark.every((x) => x < 0.45) && light.every((x) => x > 0.75);
+                dark.every((x) => x < 0.4) && light.every((x) => x > 0.8);
             if (res) {
                 next();
                 return true;
@@ -190,27 +193,30 @@ const go: CommandMaker = (trigger) => {
 // trace returns function that runs every 16ms keeping the robot in the centre of the black line surrounded by two white lines all lines are equal thickness by measuring the brightness of the left and right sensors and the augmented ratio of the darker sensor (lower value) against the lighter sensor (higher value).
 // can is onject that contains brightness values for left and right side sensors
 // trigger is a function that returns true when the command shouldn't be run by the vehicle anymore.
-const trace: CommandMaker = (trigger, can) => {
-    return function trace() {
-        if (trigger()) {
-            return [0, 0];
-        }
-        let LEFT = 1,
-            RIGHT = 1;
-        // reduce power of left or right depending of ratio of left sensor to right sensor
-        const { lft, rgt } = can.luminance.keys();
-        const turnRaw = Math.min(lft, rgt) / Math.max(lft, rgt);
-        // b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 )
-        // experiment with range of -1.5 to 1
-        const turn = mapLinear(turnRaw, 0, 1, -1, 1);
-        if (lft > rgt) {
-            RIGHT = turn;
-        } else if (rgt > lft) {
-            LEFT = turn;
-        }
-        return [LEFT, RIGHT];
+const trace: CommandMakerMaker<number | void> =
+    (speed = 1) =>
+    (trigger, can) => {
+        return function trace() {
+            speed = speed || 1;
+            if (trigger()) {
+                return [0, 0];
+            }
+            let LEFT = 1,
+                RIGHT = 1;
+            // reduce power of left or right depending of ratio of left sensor to right sensor
+            const { lft, rgt } = can.luminance.keys();
+            const turnRaw = Math.min(lft, rgt) / Math.max(lft, rgt);
+            // b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 )
+            // experiment with range of -1.5 to 1
+            const turn = mapLinear(turnRaw, 0, 1, -1, 1);
+            if (lft > rgt) {
+                RIGHT = turn;
+            } else if (rgt > lft) {
+                LEFT = turn;
+            }
+            return [LEFT * speed, RIGHT * speed];
+        };
     };
-};
 
 // turn the wheels in opposing directions by ratio until left and right sensors reach
 // equalibrium
@@ -226,7 +232,7 @@ const align: CommandMaker = (trigger, can) => {
         } else if (rgt > lft) {
             LEFT = -turn;
         }
-        if (turn < 0.3) trigger();
+        if (turn < 0.35) trigger();
         return [LEFT, RIGHT];
     };
 };
