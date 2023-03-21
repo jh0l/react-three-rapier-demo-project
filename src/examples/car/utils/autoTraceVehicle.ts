@@ -34,26 +34,31 @@ export default class AutoTraceVehicle {
             right: 0,
             cmds: {
                 queue: [
-                    [go, timer(300)],
+                    [go, timer(20)],
                     [trace, intersection("R")],
-                    [stop, timer(10)],
-                    [align, timer(500)],
-                    [drive(-1), timer(380)],
+                    [stop, timer(5)],
+                    [align, timer(10)],
+                    [drive([0]), timer(5)],
+                    [drive([-1]), timer(15)],
+                    [drive([-1, 0.5]), intersection("I")],
                     [trace, intersection("R")],
-                    [stop, timer(10)],
+                    [stop, timer(3)],
                     [trace, intersection("T")],
-                    [drive(1), timer(800)],
-                    [drive(1), intersection("I")],
-                    [align, timer(500)],
-                    [drive(0), timer(100)],
+                    [drive([-0.5]), timer(5)],
+                    [drive([1]), timer(55)],
+                    [drive([1, 0.5]), intersection("I")],
+                    [align, timer(10)],
+                    [drive([0]), timer(10)],
                     [trace, intersection("L")],
-                    [stop, timer(10)],
+                    [stop, timer(3)],
                     [trace, intersection("T")],
-                    [stop, timer(10)],
-                    [align, timer(500)],
-                    [drive(1), timer(350)],
-                    [trace, timer(2300)],
-                    [drive(1), timer(1120)],
+                    [drive([0]), timer(3)],
+                    [drive([1]), timer(12)],
+                    [drive([1, 0.5]), intersection("I")],
+                    [align, timer(10)],
+                    [trace, intersection("W")],
+                    [drive([0]), timer(30)],
+                    [drive([1]), timer(68)],
                     [stop, done],
                 ],
                 command: blank,
@@ -143,9 +148,9 @@ const done: TriggerMaker = (next) => () => {
 
 //const none: TriggerMaker = () => () => false;
 
-const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I"> =
+const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I" | "W"> =
     (lock) => (next, can: CanvasRes) => {
-        return () => {
+        return function intersection() {
             const { top, bot, rgt, lft } = can.luminance.keys();
             const [dark, light] =
                 lock === "R"
@@ -159,6 +164,8 @@ const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I"> =
                           [top, bot],
                           [lft, rgt],
                       ]
+                    : lock === "W"
+                    ? [[], [top, bot, rgt, lft]]
                     : [[], []];
             const res =
                 dark.every((x) => x < 0.45) && light.every((x) => x > 0.75);
@@ -171,7 +178,7 @@ const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I"> =
     };
 
 const go: CommandMaker = (trigger) => {
-    return () => {
+    return function go() {
         if (trigger()) {
             return [0, 0];
         }
@@ -184,7 +191,7 @@ const go: CommandMaker = (trigger) => {
 // can is onject that contains brightness values for left and right side sensors
 // trigger is a function that returns true when the command shouldn't be run by the vehicle anymore.
 const trace: CommandMaker = (trigger, can) => {
-    return () => {
+    return function trace() {
         if (trigger()) {
             return [0, 0];
         }
@@ -208,7 +215,7 @@ const trace: CommandMaker = (trigger, can) => {
 // turn the wheels in opposing directions by ratio until left and right sensors reach
 // equalibrium
 const align: CommandMaker = (trigger, can) => {
-    return () => {
+    return function align() {
         let LEFT = 0,
             RIGHT = 0;
         const { lft, rgt } = can.luminance.keys();
@@ -219,22 +226,19 @@ const align: CommandMaker = (trigger, can) => {
         } else if (rgt > lft) {
             LEFT = -turn;
         }
-        if (turn < 0.2) trigger();
+        if (turn < 0.3) trigger();
         return [LEFT, RIGHT];
     };
 };
 // ms per frame TODO: get better ticks
-const MPF = 60 / 1000;
-const timer: TriggerMakerMaker<number> = (ms) => {
-    return (next, _, refState) => {
+const timer: TriggerMakerMaker<number> = (ticks) => {
+    return function timer(next, _, refState) {
         const state = { started: false, time: 0 };
         return () => {
             const { tick } = refState;
-            console.log(tick);
             if (!state.started) {
                 state.started = true;
-                state.time = tick + ms / MPF;
-                console.log(state.time, ms / MPF);
+                state.time = tick + ticks;
             } else if (state.time < tick) {
                 next();
                 return true;
@@ -245,28 +249,30 @@ const timer: TriggerMakerMaker<number> = (ms) => {
 };
 
 const stop: CommandMaker = (trigger) => {
-    return () => {
+    return function stop() {
         trigger();
         return [0, 0];
     };
 };
 
 // drive the wheels with a degree of turning: 0 = straight, -1 = full turn left, 1 = full turn right
-type DriveParam = number;
-const drive: CommandMakerMaker<DriveParam> = (degrees) => (trigger) => {
-    return () => {
-        if (trigger()) {
-            return [0, 0];
-        }
-        let LEFT = 1,
-            RIGHT = 1;
-        // reduce power of left or right depending on degrees turn
-        if (degrees < 0) {
-            RIGHT = degrees;
-        } else if (degrees > 0) {
-            LEFT = -degrees;
-        }
+type DriveParam = [number] | [number, number];
+const drive: CommandMakerMaker<DriveParam> =
+    ([deg, pow = 1]) =>
+    (trigger) => {
+        return function drive() {
+            if (trigger()) {
+                return [0, 0];
+            }
+            let LEFT = 1,
+                RIGHT = 1;
+            // as abs(degrees) approaches 0.5, one wheels slows until stopped, as from 0.5 to 1, this wheel starts spinning in the opposite direction until it is full speed in the opposite direction to the other wheel.
+            if (deg < 0) {
+                RIGHT = 1 - Math.abs(deg) * 2;
+            } else if (deg > 0) {
+                LEFT = 1 - Math.abs(deg) * 2;
+            }
 
-        return [LEFT, RIGHT];
+            return [LEFT * pow, RIGHT * pow];
+        };
     };
-};

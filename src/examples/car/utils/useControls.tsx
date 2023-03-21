@@ -18,10 +18,13 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
     const ref = useRef<AutoTraceVehicle>(
         new AutoTraceVehicle(canvasRef.current!)
     );
+    const { paused } = useDemo();
+    console.log(paused);
+
     useKeyboard(ref, stateArr);
     useFrame(() => {
         const { auto } = state;
-        if (auto && canvasRef.current) {
+        if (!paused && auto && canvasRef.current) {
             if (!ref.current.run()) setState({ auto: false });
         }
         if (ref.current.state.sample) {

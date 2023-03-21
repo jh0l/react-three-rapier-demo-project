@@ -107,7 +107,7 @@ export const Car: Demo = () => {
     });
     return (
         <>
-            <group position={[-38, -3, 10]} rotation={[0, -Math.PI / 1.5, 0]}>
+            <group position={[-40, -3, 15]} rotation={[0, -Math.PI / 1.5, 0]}>
                 <RigidBody
                     colliders="cuboid"
                     ref={bodyRef}
@@ -264,20 +264,22 @@ function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
                 let [xs, ys, zs] = [x, y, z].map((v) =>
                     v.toFixed(1).padEnd(5, " ")
                 );
-                const loc = `V: x${xs} y${ys} z${zs}\n`;
+                const loc = `x:${xs} y:${ys} z:${zs}`;
                 const [LW, RW] = [
                     controlRef.state.left,
                     controlRef.state.right,
                 ].map((x) => String(x).padEnd(4, " "));
-                let LR = `LW:${LW} RW:${RW}\n`;
+                let LR = `LW:${LW} RW:${RW}`;
                 const [T, L, B, R] = canvasRef.luminance.map((x) =>
                     String(x).padEnd(4, " ")
                 );
-                let LUM = `T:${T} L:${L}\nB:${B} R:${R}`;
-                let frame = `F: ${controlRef.state.tick}`;
-                setData(loc + LR + LUM + frame);
+                const LUM = `T:${T} L:${L}\nB:${B} R:${R}`;
+                const frame = `F: ${controlRef.state.tick} `;
+                const cmd = `${controlRef.state.cmds.command.name}:${controlRef.state.cmds.idx}`;
+                const arr = [loc, LR, LUM, frame + cmd];
+                setData(arr.join("\n"));
             }
-        }, 100);
+        }, 200);
         return () => {
             ref.current && clearInterval(ref.current);
         };

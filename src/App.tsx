@@ -24,6 +24,7 @@ const demoContext = createContext<{
     setPaused?: React.Dispatch<React.SetStateAction<boolean>>;
     setCameraEnabled?(f: boolean): void;
     resetPhysics?(): void;
+    paused?: boolean;
 }>({});
 
 export const useDemo = () => useContext(demoContext);
@@ -122,6 +123,7 @@ export const App = () => {
                                     setPaused,
                                     setCameraEnabled,
                                     resetPhysics,
+                                    paused,
                                 }}
                             >
                                 <Car />
