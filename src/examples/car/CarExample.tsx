@@ -65,8 +65,8 @@ const WHEEL_FAC = 90;
 export const Car: Demo = () => {
     const bodyRef = useRef<RapierRigidBody>(null);
     const wheelPositions: [number, number, number][] = [
-        [2.1, -0.5, 3.3],
-        [2.1, -0.5, -3.3],
+        [3, -0.3, 3.3],
+        [3, -0.3, -3.3],
     ];
     const sensorPositions: [number, number, number][] = [
         [-2.6, 2, 0],
