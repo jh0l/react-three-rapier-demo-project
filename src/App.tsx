@@ -2,7 +2,8 @@ import {
     Box,
     Environment,
     OrbitControls,
-    PerspectiveCamera,
+    OrthographicCamera,
+    // PerspectiveCamera,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
@@ -20,8 +21,10 @@ import { Car } from "./examples/car/CarExample";
 
 const demoContext = createContext<{
     setDebug?(f: boolean): void;
-    setPaused?(f: boolean): void;
+    setPaused?: React.Dispatch<React.SetStateAction<boolean>>;
     setCameraEnabled?(f: boolean): void;
+    resetPhysics?(): void;
+    paused?: boolean;
 }>({});
 
 export const useDemo = () => useContext(demoContext);
@@ -74,7 +77,7 @@ export const App = () => {
     const [physicsKey, setPhysicsKey] = useState<number>(0);
     const [cameraEnabled, setCameraEnabled] = useState<boolean>(true);
 
-    const updatePhysicsKey = () => {
+    const resetPhysics = () => {
         setPhysicsKey((current) => current + 1);
     };
 
@@ -88,8 +91,14 @@ export const App = () => {
             }}
         >
             <Suspense fallback="Loading...">
-                <Canvas shadows>
-                    <PerspectiveCamera position={[0, 70, 0]} makeDefault />
+                <Canvas>
+                    <OrbitControls enabled={cameraEnabled} />
+                    <OrthographicCamera
+                        makeDefault
+                        position={[0, 80, 0]}
+                        scale={0.1}
+                    />
+                    {/* <PerspectiveCamera position={[0, 70, 0]} makeDefault /> */}
                     <StrictMode>
                         <Physics
                             paused={paused}
@@ -108,13 +117,13 @@ export const App = () => {
                             />
                             <Environment preset="city" />
 
-                            <OrbitControls enabled={cameraEnabled} />
-
                             <demoContext.Provider
                                 value={{
                                     setDebug,
                                     setPaused,
                                     setCameraEnabled,
+                                    resetPhysics,
+                                    paused,
                                 }}
                             >
                                 <Car />
@@ -158,8 +167,9 @@ export const App = () => {
                 <ToggleButton
                     label="Reset"
                     value={false}
-                    onClick={updatePhysicsKey}
+                    onClick={resetPhysics}
                 />
+                <ToggleButton label="Home" value={false} onClick={() => {}} />
             </div>
         </div>
     );
