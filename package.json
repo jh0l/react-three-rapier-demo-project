@@ -21,7 +21,8 @@
         "stackblur-canvas": "^2.5.0",
         "three": "0.146.0",
         "three-mesh-bvh": "^0.5.13",
-        "three-stdlib": "*"
+        "three-stdlib": "*",
+        "framer-motion": "^10.9.1"
     },
     "devDependencies": {
         "@types/react": "^18.0.28",

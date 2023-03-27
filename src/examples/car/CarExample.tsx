@@ -81,7 +81,7 @@ export const Car: Demo = () => {
     );
     const floatBoxesColorRef = useRef(
         sensorPositions.map(() => createRef<THREE.MeshPhysicalMaterial>())
-    );
+        );
     const wheelRefs = useRef(
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
