@@ -62,7 +62,21 @@ const WHEEL_COL_GROUP = 2;
 
 const WHEEL_VEL = 14;
 const WHEEL_FAC = 90;
+
 export const Car: Demo = () => {
+    return (
+        <>
+            <CarEntity position={[-40, -3, 15]} />
+            <Map map_url="map.png" />
+        </>
+    );
+};
+
+const CarEntity = ({
+    position = [-40, -3, 15],
+}: {
+    position?: [number, number, number];
+}) => {
     const bodyRef = useRef<RapierRigidBody>(null);
     const wheelPositions: [number, number, number][] = [
         [3, -0.3, 3.3],
@@ -81,7 +95,7 @@ export const Car: Demo = () => {
     );
     const floatBoxesColorRef = useRef(
         sensorPositions.map(() => createRef<THREE.MeshPhysicalMaterial>())
-        );
+    );
     const wheelRefs = useRef(
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
@@ -113,97 +127,95 @@ export const Car: Demo = () => {
         }
     });
     return (
-        <>
-            <group position={[-40, -3, 15]} rotation={[0, -Math.PI / 1.5, 0]}>
+        <group position={position} rotation={[0, -Math.PI / 1.5, 0]}>
+            <RigidBody
+                colliders="cuboid"
+                ref={bodyRef}
+                type="dynamic"
+                canSleep={false}
+                friction={0}
+                collisionGroups={interactionGroups(BODY_COL_GROUP, [
+                    FLOOR_COL_GROUP,
+                    BODY_COL_GROUP,
+                ])}
+            >
+                <Box
+                    ref={floatyBoxesRef.current[0]}
+                    position={sensorPositions[0]}
+                >
+                    <Html>
+                        {canvasRef.current && kbRef.current && (
+                            <Readout
+                                canvasRef={canvasRef.current}
+                                controlRef={kbRef.current}
+                                bodyRef={bodyRef}
+                            />
+                        )}
+                        <div style={labelStyle}>0</div>
+                        {!auto && (
+                            <div style={goBtn} onClick={handleStart}>
+                                Start
+                            </div>
+                        )}
+                    </Html>
+                    <meshStandardMaterial
+                        color={"red"}
+                        ref={floatBoxesColorRef.current[0]}
+                    />
+                    {floatyBoxesRef.current.slice(1).map((ref, index) => (
+                        <Box
+                            ref={ref}
+                            key={index + 1}
+                            position={sensorPositions[index + 1]}
+                        >
+                            <Html>
+                                <div style={labelStyle}>{index + 1}</div>
+                            </Html>
+                            <meshStandardMaterial
+                                color={"red"}
+                                metalness={1}
+                                ref={floatBoxesColorRef.current[index + 1]}
+                            />
+                        </Box>
+                    ))}
+                </Box>
+                <Box scale={[12, 2, 8]} name="chassis">
+                    <meshStandardMaterial color={"blue"} />
+                </Box>
+            </RigidBody>
+            {wheelPositions.map((wheelPosition, index) => (
                 <RigidBody
-                    colliders="cuboid"
-                    ref={bodyRef}
+                    position={wheelPosition}
+                    colliders="ball"
                     type="dynamic"
-                    canSleep={false}
-                    friction={0}
-                    collisionGroups={interactionGroups(BODY_COL_GROUP, [
+                    key={index}
+                    ref={wheelRefs.current[index]}
+                    friction={2}
+                    collisionGroups={interactionGroups(WHEEL_COL_GROUP, [
                         FLOOR_COL_GROUP,
                     ])}
                 >
-                    <Box
-                        ref={floatyBoxesRef.current[0]}
-                        position={sensorPositions[0]}
+                    <Cylinder
+                        rotation={[Math.PI / 2, 0, 0]}
+                        args={[WHEEL, WHEEL, WHEEL, 16]}
                     >
-                        <Html>
-                            {canvasRef.current && kbRef.current && (
-                                <Readout
-                                    canvasRef={canvasRef.current}
-                                    controlRef={kbRef.current}
-                                    bodyRef={bodyRef}
-                                />
-                            )}
-                            <div style={labelStyle}>0</div>
-                            {!auto && (
-                                <div style={goBtn} onClick={handleStart}>
-                                    Start
-                                </div>
-                            )}
-                        </Html>
-                        <meshStandardMaterial
-                            color={"red"}
-                            ref={floatBoxesColorRef.current[0]}
-                        />
-                        {floatyBoxesRef.current.slice(1).map((ref, index) => (
-                            <Box
-                                ref={ref}
-                                key={index + 1}
-                                position={sensorPositions[index + 1]}
-                            >
-                                <Html>
-                                    <div style={labelStyle}>{index + 1}</div>
-                                </Html>
-                                <meshStandardMaterial
-                                    color={"red"}
-                                    metalness={1}
-                                    ref={floatBoxesColorRef.current[index + 1]}
-                                />
-                            </Box>
-                        ))}
-                    </Box>
-                    <Box scale={[12, 2, 8]} name="chassis">
-                        <meshStandardMaterial color={"blue"} />
-                    </Box>
+                        <meshStandardMaterial color={"grey"} />
+                    </Cylinder>
                 </RigidBody>
-                {wheelPositions.map((wheelPosition, index) => (
-                    <RigidBody
-                        position={wheelPosition}
-                        colliders="ball"
-                        type="dynamic"
-                        key={index}
-                        ref={wheelRefs.current[index]}
-                        friction={2}
-                        collisionGroups={interactionGroups(WHEEL_COL_GROUP, [
-                            FLOOR_COL_GROUP,
-                        ])}
-                    >
-                        <Cylinder
-                            rotation={[Math.PI / 2, 0, 0]}
-                            args={[WHEEL, WHEEL, WHEEL, 16]}
-                        >
-                            <meshStandardMaterial color={"grey"} />
-                        </Cylinder>
-                    </RigidBody>
-                ))}
-                {wheelPositions.map((wheelPosition, index) => (
-                    <WheelJoint
-                        key={index}
-                        body={bodyRef}
-                        wheel={wheelRefs.current[index]}
-                        bodyAnchor={wheelPosition}
-                        wheelAnchor={[0, 0, 0]}
-                        rotationAxis={[0, 0, 1]}
-                        controls={kbRef}
-                        side={indexSides[index]}
-                    />
-                ))}
-            </group>
-            <Map map_url="map.png" />
-        </>
+            ))}
+            {wheelPositions.map((wheelPosition, index) => (
+                <WheelJoint
+                    key={index}
+                    body={bodyRef}
+                    wheel={wheelRefs.current[index]}
+                    bodyAnchor={wheelPosition}
+                    wheelAnchor={[0, 0, 0]}
+                    rotationAxis={[0, 0, 1]}
+                    controls={kbRef}
+                    side={indexSides[index]}
+                />
+            ))}
+        </group>
     );
 };
 
@@ -228,7 +240,7 @@ const labelStyle: React.CSSProperties = {
 
 const goBtn: React.CSSProperties = {
     position: "absolute",
-    left: 50,
+    left: 70,
     backgroundColor: "#4CAF50",
     border: "none",
     color: "white",
@@ -240,16 +252,6 @@ const goBtn: React.CSSProperties = {
     margin: "4px 2px",
     cursor: "pointer",
     borderRadius: "5px",
-};
-
-const readOutStyle: React.CSSProperties = {
-    ...labelStyle,
-    position: "absolute",
-    left: "-10vw",
-    top: "-20vh",
-    width: "100px",
-    height: "100px",
-    fontFamily: "monospace",
 };
 
 interface ReadoutProps {
@@ -287,9 +289,8 @@ function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
             ref.current && clearInterval(ref.current);
         };
     }, []);
-    return <pre style={readOutStyle}>{data}</pre>;
+    return <pre className="read-out">{data}</pre>;
 }
-
 // car city carpet 😎
 // const MAP_SCALE = 100;
 // const MAP_ASP = 0.833;

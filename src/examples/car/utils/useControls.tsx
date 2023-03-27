@@ -3,6 +3,7 @@ import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
 import { useDemo } from "../../../App";
 import AutoTraceVehicle from "./autoTraceVehicle";
+import { CONTROL_VALUES } from "../components/OnScreenControls/OnScreenControls";
 
 export interface ControlState {
     auto: boolean;
@@ -30,6 +31,8 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
         if (ref.current.state.sample) {
             console.log(canvasRef.current?.luminance);
         }
+        // apply onscreencontrol values
+        ref.current.applyControlValues(CONTROL_VALUES);
     });
 
     return [ref, stateArr] as const;

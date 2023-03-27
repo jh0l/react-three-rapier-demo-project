@@ -1,0 +1,26 @@
+.dragAreaContainer {
+    @apply shadow-xl w-28 h-28 flex items-center justify-center;
+    background: white;
+    border-radius: 30px;
+    position: absolute;
+    /* top: calc(50% - 150px / 2); */
+    /* left: calc(50% - 150px / 2); */
+}
+
+.dragArea {
+    @apply w-56 h-56;
+    opacity: 0.35;
+    background: white;
+    position: absolute;
+    border-radius: 30px;
+    /* top: calc(50% - 150px); */
+    /* left: calc(50% - 150px); */
+}
+
+.dragAreaParent {
+    @apply absolute bottom-44 right-36 sm:bottom-36 flex items-center justify-center;
+}
+
+.disableBtn {
+    @apply absolute bg-white right-36 -bottom-28 p-3 rounded-xl shadow-xl;
+}

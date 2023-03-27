@@ -14,8 +14,14 @@
         "resolveJsonModule": true,
         "noEmit": true,
         "jsx": "react-jsx",
+        "experimentalDecorators": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true
     },
     "include": ["src"]
+    // "references": [
+    //     {
+    //         "path": "./tsconfig.node.json"
+    //     }
+    // ]
 }

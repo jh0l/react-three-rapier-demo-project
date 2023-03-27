@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.read-out {
+    @apply select-none absolute -left-20 -top-48 w-52 h-24 font-mono text-sm text-white bg-opacity-10 bg-black rounded;
+    text-shadow: 0 0 2px black, 0 0 5px black, 0 0 7px black;
+}

@@ -2,8 +2,8 @@ import {
     Box,
     Environment,
     OrbitControls,
-    OrthographicCamera,
-    // PerspectiveCamera,
+    // OrthographicCamera,
+    PerspectiveCamera,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
@@ -18,6 +18,7 @@ import {
 } from "react";
 
 import { Car } from "./examples/car/CarExample";
+import OnScreenControls from "./examples/car/components/OnScreenControls/OnScreenControls";
 
 const demoContext = createContext<{
     setDebug?(f: boolean): void;
@@ -93,12 +94,7 @@ export const App = () => {
             <Suspense fallback="Loading...">
                 <Canvas>
                     <OrbitControls enabled={cameraEnabled} />
-                    <OrthographicCamera
-                        makeDefault
-                        position={[0, 80, 0]}
-                        scale={0.1}
-                    />
-                    {/* <PerspectiveCamera position={[0, 70, 0]} makeDefault /> */}
+                    <PerspectiveCamera position={[0, 70, 0]} makeDefault />
                     <StrictMode>
                         <Physics
                             paused={paused}
@@ -137,7 +133,6 @@ export const App = () => {
                     </StrictMode>
                 </Canvas>
             </Suspense>
-
             <div
                 style={{
                     position: "absolute",
@@ -171,6 +166,7 @@ export const App = () => {
                 />
                 <ToggleButton label="Home" value={false} onClick={() => {}} />
             </div>
+            <OnScreenControls />
         </div>
     );
 };

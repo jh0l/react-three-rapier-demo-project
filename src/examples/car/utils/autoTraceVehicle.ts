@@ -123,6 +123,25 @@ export default class AutoTraceVehicle {
         return [left, right];
     }
 
+    applyControlValues({
+        x,
+        y,
+        active,
+    }: {
+        x: number;
+        y: number;
+        active: boolean;
+    }) {
+        // x is left/right
+        // y is forward/backward
+        if (active) {
+            let lft = -y + x;
+            let rgt = -y - x;
+            this.state.left = lft;
+            this.state.right = rgt;
+        }
+    }
+
     static cleanOut(x: number): number {
         return Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100)) || 0;
     }
