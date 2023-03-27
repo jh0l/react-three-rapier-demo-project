@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+    import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import cn from "clsx";
 import { mapLinear } from "three/src/math/MathUtils";
@@ -48,9 +48,7 @@ export default function OnScreenControls() {
                 dragConstraints={constraintsRef}
                 dragElastic={0}
                 dragSnapToOrigin={true}
-                onDrag={(e, info) => {
-                    updateControlValues();
-                }}
+                onDrag={updateControlValues}
                 ref={controlRef}
             >
                 <pre>
