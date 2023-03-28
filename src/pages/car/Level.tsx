@@ -1,16 +1,15 @@
 import { Image } from "@react-three/drei";
-import { Demo } from "../../App";
 import { MAP_ASP, MAP_SCALE } from "./utils/useCanvasMap";
 import { CarEntity } from "./CarEntity";
 
-export const Car: Demo = () => {
+export default function Level() {
     return (
         <>
             <CarEntity position={[-40, -3, 15]} />
             <Map map_url="map.png" />
         </>
     );
-};
+}
 
 const Map = ({ map_url }: { map_url: string }) => {
     return (

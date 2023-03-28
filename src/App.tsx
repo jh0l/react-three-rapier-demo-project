@@ -1,24 +1,21 @@
 import {
     Box,
     Environment,
-    OrbitControls,
     // OrthographicCamera,
-    PerspectiveCamera,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
 import { Perf } from "r3f-perf";
 import {
     createContext,
-    ReactNode,
     Suspense,
     useContext,
     useState,
     StrictMode,
 } from "react";
 
-import { Car } from "./examples/car/CarExample";
-import OnScreenControls from "./examples/car/components/OnScreenControls/OnScreenControls";
+import Level from "./pages/car/Level";
+import OnScreenControls from "./pages/car/components/OnScreenControls/OnScreenControls";
 
 const appContext = createContext<{
     setDebug?(f: boolean): void;
@@ -53,10 +50,6 @@ const ToggleButton = ({
     </button>
 );
 
-export interface Demo {
-    (props: { children?: ReactNode }): JSX.Element;
-}
-
 const Floor = () => {
     return (
         <RigidBody type="fixed" colliders="cuboid">
@@ -77,10 +70,18 @@ export const App = () => {
     const [perf, setPerf] = useState<boolean>(false);
     const [paused, setPaused] = useState<boolean>(false);
     const [physicsKey, setPhysicsKey] = useState<number>(0);
-    const [cameraEnabled, setCameraEnabled] = useState<boolean>(true);
+    const [_, setCameraEnabled] = useState<boolean>(true);
 
     const resetPhysics = () => {
         setPhysicsKey((current) => current + 1);
+    };
+
+    const context = {
+        setDebug,
+        setPaused,
+        setCameraEnabled,
+        resetPhysics,
+        paused,
     };
 
     return (
@@ -114,16 +115,8 @@ export const App = () => {
                             />
                             <Environment preset="city" />
 
-                            <appContext.Provider
-                                value={{
-                                    setDebug,
-                                    setPaused,
-                                    setCameraEnabled,
-                                    resetPhysics,
-                                    paused,
-                                }}
-                            >
-                                <Car />
+                            <appContext.Provider value={context}>
+                                <Level />
                             </appContext.Provider>
 
                             <Floor />
