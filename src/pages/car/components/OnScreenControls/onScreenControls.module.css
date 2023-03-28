@@ -14,7 +14,7 @@
 }
 
 .dragAreaParent {
-    @apply absolute bottom-32 right-20 sm:bottom-36 flex items-center justify-center;
+    @apply absolute bottom-32 right-20 sm:bottom-36 sm:right-36 flex items-center justify-center;
 }
 
 .disableBtn {

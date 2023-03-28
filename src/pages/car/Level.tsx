@@ -1,6 +1,9 @@
-import { Image, Box } from "@react-three/drei";
+import { Image, Box, Cylinder } from "@react-three/drei";
 import { MAP_ASP, MAP_SCALE } from "./utils/useCanvasMap";
 import { CarEntity } from "./CarEntity";
+import { useRef } from "react";
+import { Color, MeshStandardMaterial } from "three";
+import { RigidBody } from "@react-three/rapier";
 
 export default function Level() {
     return (
@@ -13,16 +16,118 @@ export default function Level() {
 }
 
 function FuelStation() {
+    const mat = useRef(
+        new MeshStandardMaterial({
+            color: "yellow",
+            opacity: 0.9,
+            transparent: true,
+        })
+    );
     return (
         <>
-            <Box scale={[4, 5, 6]}  position={[-43, -5, -12]}>
-                <meshStandardMaterial color="yellow" />
-            </Box>
-            <Box scale={[3, 4, 4]}  position={[-37, -5, -14]}>
-                <meshStandardMaterial color="yellow" />
-            </Box>
+            {/* MAIN BOX */}
+            <RigidBody>
+                <Box
+                    scale={[4.2, 5, 5.74]}
+                    position={[-43.24, -5, -11.94]}
+                    material={mat.current}
+                />
+                {/* BRIDGE */}
+                <Box scale={[3.5, 0.5, 0.5]} position={[-39.5, -5, -13.4]}>
+                    <meshStandardMaterial color="black" />
+                </Box>
+                <Box scale={[3.5, 0.5, 0.5]} position={[-39.5, -6, -13.4]}>
+                    <meshStandardMaterial color="black" />
+                </Box>
+                {/* FRONT BOX */}
+                <Box
+                    scale={[2.7, 3.5, 4.1]}
+                    position={[-36.85, -5.75, -13.4]}
+                    material={mat.current}
+                />
+            </RigidBody>
+            {/* PUSHY BOY */}
+            <RigidBody>
+                <Box scale={[1, 1, 2]} position={[-35, -6.6, -13.4]}>
+                    <meshStandardMaterial color="orange" />
+                </Box>
+            </RigidBody>
+            {/* CAR */}
+            <RigidBody>
+                <Box
+                    scale={[2, 2, 4]}
+                    position={[-43.96, -5.6, -6.7]}
+                    material={mat.current}
+                />
+                <Cylinder
+                    args={[0.45, 0.45, 0.45, 16]}
+                    rotation={[0, 0, Math.PI / 2]}
+                    position={[-42.7, -6.5, -5.45]}
+                >
+                    <meshStandardMaterial
+                        color="gray"
+                        transparent={true}
+                        opacity={0.8}
+                    />
+                </Cylinder>
+                <Cylinder
+                    args={[0.45, 0.45, 0.45, 16]}
+                    rotation={[0, 0, Math.PI / 2]}
+                    position={[-42.7, -6.5, -6.75]}
+                >
+                    <meshStandardMaterial
+                        color="gray"
+                        transparent={true}
+                        opacity={0.8}
+                    />
+                </Cylinder>
+                <Cylinder
+                    args={[0.45, 0.45, 0.45, 16]}
+                    rotation={[0, 0, Math.PI / 2]}
+                    position={[-45.21, -6.5, -8.1]}
+                >
+                    <meshStandardMaterial
+                        color="gray"
+                        transparent={true}
+                        opacity={0.8}
+                    />
+                </Cylinder>
+                <Cylinder
+                    args={[0.45, 0.45, 0.45, 16]}
+                    rotation={[0, 0, Math.PI / 2]}
+                    position={[-45.21, -6.5, -5.45]}
+                >
+                    <meshStandardMaterial
+                        color="gray"
+                        transparent={true}
+                        opacity={0.8}
+                    />
+                </Cylinder>
+                <Cylinder
+                    args={[0.45, 0.45, 0.45, 16]}
+                    rotation={[0, 0, Math.PI / 2]}
+                    position={[-45.21, -6.5, -6.75]}
+                >
+                    <meshStandardMaterial
+                        color="gray"
+                        transparent={true}
+                        opacity={0.8}
+                    />
+                </Cylinder>
+                <Cylinder
+                    args={[0.45, 0.45, 0.45, 16]}
+                    rotation={[0, 0, Math.PI / 2]}
+                    position={[-42.7, -6.5, -8.1]}
+                >
+                    <meshStandardMaterial
+                        color="gray"
+                        transparent={true}
+                        opacity={0.8}
+                    />
+                </Cylinder>
+            </RigidBody>
         </>
-    )
+    );
 }
 
 const Map = ({ map_url }: { map_url: string }) => {
