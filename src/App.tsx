@@ -20,7 +20,7 @@ import {
 import { Car } from "./examples/car/CarExample";
 import OnScreenControls from "./examples/car/components/OnScreenControls/OnScreenControls";
 
-const demoContext = createContext<{
+const appContext = createContext<{
     setDebug?(f: boolean): void;
     setPaused?: React.Dispatch<React.SetStateAction<boolean>>;
     setCameraEnabled?(f: boolean): void;
@@ -28,7 +28,7 @@ const demoContext = createContext<{
     paused?: boolean;
 }>({});
 
-export const useDemo = () => useContext(demoContext);
+export const useAppContext = () => useContext(appContext);
 
 const ToggleButton = ({
     label,
@@ -94,8 +94,8 @@ export const App = () => {
         >
             <Suspense fallback="Loading...">
                 <Canvas>
-                    <OrbitControls enabled={cameraEnabled} />
-                    <PerspectiveCamera position={[0, 70, 0]} makeDefault />
+                    {/* <OrbitControls enabled={cameraEnabled} /> */}
+                    {/* <PerspectiveCamera position={[0, 70, 0]} makeDefault /> */}
                     <StrictMode>
                         <Physics
                             paused={paused}
@@ -114,7 +114,7 @@ export const App = () => {
                             />
                             <Environment preset="city" />
 
-                            <demoContext.Provider
+                            <appContext.Provider
                                 value={{
                                     setDebug,
                                     setPaused,
@@ -124,7 +124,7 @@ export const App = () => {
                                 }}
                             >
                                 <Car />
-                            </demoContext.Provider>
+                            </appContext.Provider>
 
                             <Floor />
 

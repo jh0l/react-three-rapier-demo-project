@@ -1,7 +1,7 @@
 import { RefObject, useEffect, useRef, useState } from "react";
 import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
-import { useDemo } from "../../../App";
+import { useAppContext } from "../../../App";
 import AutoTraceVehicle from "./autoTraceVehicle";
 import { CONTROL_VALUES } from "../components/OnScreenControls/OnScreenControls";
 
@@ -19,7 +19,7 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
     const ref = useRef<AutoTraceVehicle>(
         new AutoTraceVehicle(canvasRef.current!)
     );
-    const { paused } = useDemo();
+    const { paused } = useAppContext();
     console.log(paused);
 
     useKeyboard(ref, stateArr);
@@ -70,7 +70,7 @@ const keyMap: KeyMapType<string> = {
 
 function useKeyboard(res: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
     const [, setState] = stateArr;
-    const demo = useDemo();
+    const demo = useAppContext();
     const keys = useRef<KeyMapType<boolean>>({
         forward: false,
         backward: false,
