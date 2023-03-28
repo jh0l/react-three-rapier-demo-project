@@ -3,7 +3,7 @@ import {
     Environment,
     // OrthographicCamera,
     PerspectiveCamera,
-    OrbitControls
+    OrbitControls,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
@@ -95,7 +95,7 @@ export const App = () => {
                 fontFamily: "sans-serif",
             }}
         >
-            <Suspense fallback="Loading...">
+            <Suspense fallback={<Loading />}>
                 <Canvas>
                     <OrbitControls enabled={cameraEnabled} />
                     <PerspectiveCamera position={[0, 70, 0]} makeDefault />
@@ -163,6 +163,25 @@ export const App = () => {
                 <ToggleButton label="Home" value={false} onClick={() => {}} />
             </div>
             <OnScreenControls />
+        </div>
+    );
+};
+
+const Loading = () => {
+    return (
+        <div className="flex-col font-mono w-full h-full flex items-center justify-center text-white text-xl">
+            <div className="flex items-center justify-center">
+                loading simulation
+                <div className="flex items-center justify-center">
+                    <div className="font-mono ml-4 animate-spin text-5xl origin-[50%_20.7px]">
+                        📀
+                    </div>
+                    <div className="-ml-5 text-5xl z-10 rotate-6">/</div>
+                </div>
+            </div>
+            <div className="w-72">
+                <div className="loading origin-left text-3xl font-bold">_</div>
+            </div>
         </div>
     );
 };
