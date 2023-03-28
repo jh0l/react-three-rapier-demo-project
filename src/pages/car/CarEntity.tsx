@@ -1,4 +1,9 @@
-import { Box, Cylinder, Html, PerspectiveCamera } from "@react-three/drei";
+import {
+    Box,
+    Cylinder,
+    Html,
+    PerspectiveCamera
+} from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
     interactionGroups,
@@ -133,7 +138,7 @@ export function CarEntity({
                         position={[30, 10, 0]}
                         rotation={[0, Math.PI / 2, 0]}
                     >
-                        <PerspectiveCamera makeDefault position={[0, 0, 10]} />
+                        <PerspectiveCamera position={[0, 0, 10]} />
                     </group>
                     <Html>
                         {canvasRef.current && kbRef.current && (
@@ -229,7 +234,8 @@ export const labelStyle: React.CSSProperties = {
 
 export const goBtn: React.CSSProperties = {
     position: "absolute",
-    left: 70,
+    right: 15,
+    bottom: 50,
     backgroundColor: "#4CAF50",
     border: "none",
     color: "white",

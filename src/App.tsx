@@ -2,6 +2,8 @@ import {
     Box,
     Environment,
     // OrthographicCamera,
+    PerspectiveCamera,
+    OrbitControls
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
@@ -70,7 +72,7 @@ export const App = () => {
     const [perf, setPerf] = useState<boolean>(false);
     const [paused, setPaused] = useState<boolean>(false);
     const [physicsKey, setPhysicsKey] = useState<number>(0);
-    const [_, setCameraEnabled] = useState<boolean>(true);
+    const [cameraEnabled, setCameraEnabled] = useState<boolean>(true);
 
     const resetPhysics = () => {
         setPhysicsKey((current) => current + 1);
@@ -95,8 +97,8 @@ export const App = () => {
         >
             <Suspense fallback="Loading...">
                 <Canvas>
-                    {/* <OrbitControls enabled={cameraEnabled} /> */}
-                    {/* <PerspectiveCamera position={[0, 70, 0]} makeDefault /> */}
+                    <OrbitControls enabled={cameraEnabled} />
+                    <PerspectiveCamera position={[0, 70, 0]} makeDefault />
                     <StrictMode>
                         <Physics
                             paused={paused}

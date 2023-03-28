@@ -1,4 +1,4 @@
-import { Image } from "@react-three/drei";
+import { Image, Box } from "@react-three/drei";
 import { MAP_ASP, MAP_SCALE } from "./utils/useCanvasMap";
 import { CarEntity } from "./CarEntity";
 
@@ -7,8 +7,22 @@ export default function Level() {
         <>
             <CarEntity position={[-40, -3, 15]} />
             <Map map_url="map.png" />
+            <FuelStation />
         </>
     );
+}
+
+function FuelStation() {
+    return (
+        <>
+            <Box scale={[4, 5, 6]}  position={[-43, -5, -12]}>
+                <meshStandardMaterial color="yellow" />
+            </Box>
+            <Box scale={[3, 4, 4]}  position={[-37, -5, -14]}>
+                <meshStandardMaterial color="yellow" />
+            </Box>
+        </>
+    )
 }
 
 const Map = ({ map_url }: { map_url: string }) => {
