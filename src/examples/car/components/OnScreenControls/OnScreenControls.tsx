@@ -22,8 +22,8 @@ export default function OnScreenControls() {
             constraintsRef.current.getBoundingClientRect();
         const cont = controlRef.current.getBoundingClientRect();
         const [cx, cy] = [cont.x + cont.width / 2, cont.y + cont.height / 2];
-        CONTROL_VALUES.x = mapLinear(cx, x, x + width, -1, 1) * 2;
-        CONTROL_VALUES.y = mapLinear(cy, y, y + height, -1, 1) * 2;
+        CONTROL_VALUES.x = mapLinear(cx, x, x + width, -1, 1) * 1.3;
+        CONTROL_VALUES.y = mapLinear(cy, y, y + height, -1, 1) * 1.3;
     };
     const setActive = (val: boolean) => {
         _setActive(() => {
