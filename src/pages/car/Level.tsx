@@ -2,7 +2,7 @@ import { Image, Box, Cylinder } from "@react-three/drei";
 import { MAP_ASP, MAP_SCALE } from "./utils/useCanvasMap";
 import { CarEntity } from "./CarEntity";
 import { useRef } from "react";
-import { Color, MeshStandardMaterial } from "three";
+import { MeshStandardMaterial } from "three";
 import { RigidBody } from "@react-three/rapier";
 
 export default function Level() {
