@@ -137,11 +137,12 @@ export default class AutoTraceVehicle {
         if (active) {
             let lft = -y + x;
             let rgt = -y - x;
-            this.state.left = lft;
-            this.state.right = rgt;
+            this.state.left = AutoTraceVehicle.cleanOut(lft);
+            this.state.right = AutoTraceVehicle.cleanOut(rgt);
         }
     }
 
+    // truncates number to 2 decimal places, limits max and min to -1 and 1
     static cleanOut(x: number): number {
         return Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100)) || 0;
     }

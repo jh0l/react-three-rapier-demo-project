@@ -46,6 +46,7 @@ const ToggleButton = ({
             color: value ? "white" : "red",
             borderRadius: 4,
         }}
+        className="select-none"
         onClick={onClick}
     >
         {label}
