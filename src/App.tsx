@@ -98,7 +98,7 @@ export const App = () => {
             <Suspense fallback={<Loading />}>
                 <Canvas>
                     <OrbitControls enabled={cameraEnabled} />
-                    <PerspectiveCamera position={[0, 70, 0]} makeDefault />
+                    <PerspectiveCamera position={[10, 5, 0]} makeDefault />
                     <StrictMode>
                         <Physics
                             paused={paused}

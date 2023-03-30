@@ -1,9 +1,4 @@
-import {
-    Box,
-    Cylinder,
-    Html,
-    PerspectiveCamera
-} from "@react-three/drei";
+import { Box, Cylinder, Html, PerspectiveCamera } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import {
     interactionGroups,
@@ -11,6 +6,8 @@ import {
     RigidBody,
     useRevoluteJoint,
     Vector3Array,
+    CuboidCollider,
+    BallCollider,
 } from "@react-three/rapier";
 import { RefObject, createRef, useEffect, useRef, useState } from "react";
 import { useControls } from "./utils/useControls";
@@ -52,6 +49,21 @@ export const WheelJoint = ({
 
     return null;
 };
+
+// interface PokeyProps {
+//     body: RefObject<RapierRigidBody>;
+//     pokey: RefObject<RapierRigidBody>;
+//     bodyAnchor: Vector3Array;
+//     pokeyAnchor: Vector3Array;
+//     rotAxis: Vector3Array;
+// }
+
+// export const PokeyJoint = ({body, pokey, bodyAnchor, pokeyAnchor, rotAxis}: PokeyProps) => {
+//     const joint = usePrismaticJoint(body, pokey, [
+
+//     ]);
+//     return null;
+// }
 
 // technically the floor is a member of all collision groups by default, but we
 // want to pretend it's in 0 just so BODY and WHEEL don't interact.
@@ -120,7 +132,7 @@ export function CarEntity({
     return (
         <group position={position} rotation={[0, -Math.PI / 1.5, 0]}>
             <RigidBody
-                colliders="cuboid"
+                colliders={false}
                 ref={bodyRef}
                 type="dynamic"
                 canSleep={false}
@@ -184,9 +196,25 @@ export function CarEntity({
                         </Box>
                     ))}
                 </Box>
-                <Box scale={[12, 2, 8]} name="chassis">
+                <Box scale={[8, 2, 8]} name="chassis">
                     <meshStandardMaterial color={"blue"} />
                 </Box>
+                <CuboidCollider args={[8, 2, 8]} scale={0.5} />
+                <Cylinder
+                    rotation={[Math.PI / 2, 0, 0]}
+                    position={[-3, -0.3, -3.3]}
+                    args={[WHEEL, WHEEL, WHEEL, 16]}
+                />
+                <BallCollider
+                    friction={0.1}
+                    args={[WHEEL]}
+                    position={[-3, -0.3, 0]}
+                />
+                <Cylinder
+                    rotation={[Math.PI / 2, 0, 0]}
+                    position={[-3, -0.3, 3.3]}
+                    args={[WHEEL, WHEEL, WHEEL, 16]}
+                />
             </RigidBody>
             {wheelPositions.map((wheelPosition, index) => (
                 <RigidBody

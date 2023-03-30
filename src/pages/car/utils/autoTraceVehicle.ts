@@ -55,8 +55,8 @@ export default class AutoTraceVehicle {
                     [trace(), intersection("L")],
                     [stop, timer(3)],
                     [trace(), intersection("T")],
-                    [drive([0]), timer(3)],
-                    [drive([1]), timer(25)],
+                    [drive([-0.5, -1]), timer(25)],
+                    [drive([0]), timer(30)],
                     [drive([1, 0.6]), intersection("I")],
                     [align, timer(10)],
                     [trace(), intersection("W")],
@@ -246,13 +246,13 @@ const align: CommandMaker = (trigger, can) => {
             RIGHT = 0;
         const { lft, rgt } = can.luminance.keys();
         const turn = Math.max(lft, rgt) - Math.min(lft, rgt);
-        LEFT = RIGHT = turn;
+        LEFT = RIGHT = Math.max(turn, 0.1);
         if (lft > rgt) {
             RIGHT = -turn;
         } else if (rgt > lft) {
             LEFT = -turn;
         }
-        if (turn < 0.35) trigger();
+        if (turn < 0.42) trigger();
         return [LEFT, RIGHT];
     };
 };

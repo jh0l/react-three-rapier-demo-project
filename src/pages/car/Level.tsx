@@ -45,11 +45,18 @@ function FuelStation() {
                     position={[-36.85, -5.75, -13.4]}
                     material={mat.current}
                 />
+                {/* RESTBOX */}
+                <Box scale={[0.5, 0.5, 1.12]} position={[-35, -7.1, -13.4]}>
+                    <meshStandardMaterial color="orange" />
+                </Box>
             </RigidBody>
             {/* PUSHY BOY */}
-            <RigidBody>
-                <Box scale={[1, 1, 2]} position={[-35, -6.6, -13.4]}>
-                    <meshStandardMaterial color="orange" />
+            <RigidBody
+                enabledTranslations={[false, true, false]}
+                lockRotations={true}
+            >
+                <Box scale={[0.5, 0.5, 4.1]} position={[-35, -1.1, -13.4]}>
+                    <meshStandardMaterial color="gray" />
                 </Box>
             </RigidBody>
             {/* CAR */}
