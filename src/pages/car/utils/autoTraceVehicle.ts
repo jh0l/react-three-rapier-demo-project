@@ -19,8 +19,8 @@ interface State {
         Y: number;
     };
     cmds: {
-        queue: [CommandMaker, TriggerMaker][];
-        command: Command;
+        queue: CommandBarMaker[];
+        command: CommandBar;
         idx: number;
     };
     sample: boolean;
@@ -30,6 +30,7 @@ interface State {
 export default class AutoTraceVehicle {
     can: CanvasRes;
     state: State;
+    cmdArgs = new CommandParam();
     constructor(can: CanvasRes) {
         this.can = can;
         this.state = {
@@ -46,7 +47,7 @@ export default class AutoTraceVehicle {
                     [trace(0.8), intersection("R")],
                     [stop, timer(5)],
                     [align, timer(10)],
-                    [drive([0]), timer(13)],
+                    [drive([0]), timer(8)],
                     [drive([-1]), timer(20)],
                     [drive([-1, 0.6]), intersection("I")],
                     [trace(), intersection("R")],
@@ -63,33 +64,63 @@ export default class AutoTraceVehicle {
                     [trace(), intersection("L")],
                     [stop, timer(3)],
                     [trace(), intersection("T")],
-                    [drive([-0.5, -1]), timer(25)],
-                    [drive([0]), timer(30)],
+                    [drive([0, -1]), timer(10)],
+                    [drive([-1, -1]), timer(18)],
+                    [drive([0.5, 1]), timer(23)],
                     [drive([1, 0.6]), intersection("I")],
                     [align, timer(10)],
                     [trace(), intersection("W")],
                     [drive([0]), timer(38)],
-                    [drive([1, 0.7]), timer(177)],
+                    [drive([1, 0.7]), timer(120)],
                     [stop, done],
                 ],
-                command: blank,
                 idx: -1,
+                command: [],
             },
             sample: false,
             tick: 0,
         };
+        this.cmdArgs = new CommandParam();
     }
+    parseCommandBarMaker(cbm: CommandBarMaker, next: () => void): CommandBar {
+        const complete = { current: 0 };
+        const parseCommandBarMakerUnit = (
+            cbmu: CommandBarMakerUnit
+        ): [CommandMaker[], Trigger] => {
+            const [cmdmkr, trigmkr] = cbmu;
+            let trig = () => false;
+            if (trigmkr) {
+                trig = () => {
+                    const res = trigmkr(next, this.can, this.state);
+                    if (res) complete.current -= 1;
+                    return res;
+                }
+            const cmds: CommandMaker[] = [];
+            if (typeof cmdmkr === "function") {
+                cmds.push(cmdmkr);
+            } else {
+                for (const cmd of cmdmkr) {
+                    cmds.push(cmd);
+                }
+            }
+            return [cmds, trig];
+        };
+        const res: CommandBar = [];
+        if (typeof cbm[0] === "function") {
+            cbm = cbm as CommandBarMakerUnit;
+            res.push(parseCommandBarMakerUnit(cbm));
+        } else if (typeof cbm[0][0] === "function") {
+            cbm = cbm as CommandBarMakerUnit[];
+            for (const cbmu of cbm) {
+                res.push(parseCommandBarMakerUnit(cbmu));
+            }
+        }
+        return res;
+    }
+
     nextCommand() {
         const { cmds } = this.state;
-        cmds.command = cmds.queue[cmds.idx][0](
-            cmds.queue[cmds.idx][1](
-                () => this.nextCommand(),
-                this.can,
-                this.state
-            ),
-            this.can,
-            this.state
-        );
+        cmds.command = thisparseCommandBarMaker(cmds.queue[cmds.idx]);
         cmds.idx += 1;
     }
 
@@ -105,10 +136,8 @@ export default class AutoTraceVehicle {
         }
         if (cmds.idx < cmds.queue.length) {
             // run current command and apply (cleaned) output
-            const rawOutput = cmds.command();
-            const [left, right] = this.processSteering(rawOutput);
-            this.state.left = left;
-            this.state.right = right;
+            cmds.command(this.cmdArgs);
+            [this.state.left, this.state.right] = this.cmdArgs._drive;
             this.state.tick += 1;
         } else {
             // reset
@@ -120,15 +149,9 @@ export default class AutoTraceVehicle {
     reset() {
         const { cmds } = this.state;
         cmds.idx = -1;
-        cmds.command = blank;
         this.state.record = new Array(2000);
         this.state.tick = 0;
-    }
-
-    processSteering([left, right]: [number, number]) {
-        left = AutoTraceVehicle.cleanOut(left);
-        right = AutoTraceVehicle.cleanOut(right);
-        return [left, right];
+        this.cmdArgs = new CommandParam();
     }
 
     applyControlValues({
@@ -145,32 +168,57 @@ export default class AutoTraceVehicle {
         if (active) {
             let lft = -y + x;
             let rgt = -y - x;
-            this.state.left = AutoTraceVehicle.cleanOut(lft);
-            this.state.right = AutoTraceVehicle.cleanOut(rgt);
+            [this.state.left, this.state.right] = this.cmdArgs.drive(
+                lft,
+                rgt
+            )._drive;
         }
     }
+}
 
-    // truncates number to 2 decimal places, limits max and min to -1 and 1
-    static cleanOut(x: number): number {
+class CommandParam {
+    _drive: [number, number];
+    _probe: [number, number];
+    constructor() {
+        this._drive = [0, 0];
+        this._probe = [0, 0];
+    }
+    drive(left?: number, right?: number) {
+        if (left !== undefined) this._drive[0] = this.clean(left);
+        if (right !== undefined) this._drive[1] = this.clean(right);
+        return this;
+    }
+    probe(x?: number, y?: number) {
+        if (x !== undefined) this._probe[0] = x;
+        if (y !== undefined) this._probe[1] = y;
+        return this;
+    }
+    clean(x: number): number {
         return Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100)) || 0;
     }
 }
 
-type CommandMakerMaker<P> = (p: P) => CommandMaker;
-
-type CommandMaker = (
-    nextTrigger: Trigger,
-    can: CanvasRes,
-    ref: State
-) => Command;
-
-type Command = () => [number, number];
-
-const blank: Command = () => [0, 0];
+// A CommandBar is made from a CommandBarMaker by calling each CommandMaker with the TriggerMaker it is paired with (or a placeholder if there is no TriggerMaker) in each of the CommandBarMakerUnits of the CommandBarMaker
+// Through the CommandBar, commands can run concurrently, much like instruments in a song
+// For each bar, commands are run in unison until their trigger is met. Once all commands in the array have triggers met, the queue index is incremented and the we move on to the next CommandBar.
+// If a command has no trigger, it will run until the bar is ended by another command's trigger
 
 type Trigger = () => boolean;
 type TriggerMaker = (next: () => void, can: CanvasRes, ref: State) => Trigger;
 type TriggerMakerMaker<T> = (p: T) => TriggerMaker;
+
+type Command = (args: CommandParam) => CommandParam;
+
+type CommandMaker = (trigger: Trigger, can: CanvasRes, ref: State) => Command;
+
+type CommandMakerMaker<P> = (p: P) => CommandMaker;
+
+type CommandBar = [CommandMaker[], Trigger][];
+
+type CommandBarMakerUnit = [CommandMaker | CommandMaker[], TriggerMaker?];
+type CommandBarMaker = CommandBarMakerUnit | CommandBarMakerUnit[];
+
+const blank: Command = (p) => p.drive(0, 0);
 
 const done: TriggerMaker = (next) => () => {
     next();
@@ -209,11 +257,11 @@ const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I" | "W"> =
     };
 
 const go: CommandMaker = (trigger) => {
-    return function go() {
+    return function go(args) {
         if (trigger()) {
-            return [0, 0];
+            return args.drive(0, 0);
         }
-        return [1, 1];
+        return args.drive(1, 1);
     };
 };
 
@@ -224,10 +272,10 @@ const go: CommandMaker = (trigger) => {
 const trace: CommandMakerMaker<number | void> =
     (speed = 1) =>
     (trigger, can) => {
-        return function trace() {
+        return function trace(args) {
             speed = speed || 1;
             if (trigger()) {
-                return [0, 0];
+                return args.drive(0, 0);
             }
             let LEFT = 1,
                 RIGHT = 1;
@@ -242,14 +290,14 @@ const trace: CommandMakerMaker<number | void> =
             } else if (rgt > lft) {
                 LEFT = turn;
             }
-            return [LEFT * speed, RIGHT * speed];
+            return args.drive(LEFT * speed, RIGHT * speed);
         };
     };
 
 // turn the wheels in opposing directions by ratio until left and right sensors reach
 // equalibrium
 const align: CommandMaker = (trigger, can) => {
-    return function align() {
+    return function align(args) {
         let LEFT = 0,
             RIGHT = 0;
         const { lft, rgt } = can.luminance.keys();
@@ -261,7 +309,7 @@ const align: CommandMaker = (trigger, can) => {
             LEFT = -turn;
         }
         if (turn < 0.42) trigger();
-        return [LEFT, RIGHT];
+        return args.drive(LEFT, RIGHT);
     };
 };
 // ms per frame TODO: get better ticks
@@ -283,9 +331,9 @@ const timer: TriggerMakerMaker<number> = (ticks) => {
 };
 
 const stop: CommandMaker = (trigger) => {
-    return function stop() {
+    return function stop(args) {
         trigger();
-        return [0, 0];
+        return args.drive(0, 0);
     };
 };
 
@@ -294,9 +342,9 @@ type DriveParam = [number] | [number, number];
 const drive: CommandMakerMaker<DriveParam> =
     ([deg, pow = 1]) =>
     (trigger) => {
-        return function drive() {
+        return function drive(args) {
             if (trigger()) {
-                return [0, 0];
+                return args.drive(0, 0);
             }
             let LEFT = 1,
                 RIGHT = 1;
@@ -307,6 +355,6 @@ const drive: CommandMakerMaker<DriveParam> =
                 LEFT = 1 - Math.abs(deg) * 2;
             }
 
-            return [LEFT * pow, RIGHT * pow];
+            return args.drive(LEFT * pow, RIGHT * pow);
         };
     };

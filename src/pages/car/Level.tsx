@@ -8,7 +8,10 @@ import { RigidBody } from "@react-three/rapier";
 export default function Level() {
     return (
         <>
+            {/* approaching fuelstation again */}
+            {/* <CarEntity position={[-19, -5.3, -13.0]} rotation={[0, 0, 0]} /> */}
             <CarEntity position={[-40, -3, 15]} />
+            {/* <CarEntity position={[-20, -3, 10]} /> */}
             <Map map_url="map.png" />
             <FuelStation />
         </>
