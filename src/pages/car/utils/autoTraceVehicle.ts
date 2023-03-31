@@ -14,6 +14,10 @@ interface State {
     record: ControlFrame[];
     left: number;
     right: number;
+    probe: {
+        X: number;
+        Y: number;
+    };
     cmds: {
         queue: [CommandMaker, TriggerMaker][];
         command: Command;
@@ -32,6 +36,10 @@ export default class AutoTraceVehicle {
             record: new Array(2000),
             left: 0,
             right: 0,
+            probe: {
+                X: 0,
+                Y: 0,
+            },
             cmds: {
                 queue: [
                     [go, timer(20)],

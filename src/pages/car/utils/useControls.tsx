@@ -66,24 +66,21 @@ const keyMap: KeyMapType<string> = {
     j: "sample",
     r: "reset",
     p: "paused",
+    o: "probe_up",
+    l: "probe_down",
 };
 
-function useKeyboard(res: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
+function useKeyboard(ctrl: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
     const [, setState] = stateArr;
     const demo = useAppContext();
-    const keys = useRef<KeyMapType<boolean>>({
-        forward: false,
-        backward: false,
-        left: false,
-        right: false,
-        brake: false,
-        auto: false,
-        reset: false,
-        paused: false,
-        sample: false,
-    });
+    const keys = useRef<KeyMapType<boolean>>(
+        Object.values(keyMap).reduce(
+            (a, b) => ({ ...a, [b]: false }),
+            {} as any
+        )
+    );
     useKeyPresses((key, b) => {
-        if (key in keyMap && keyMap[key] in keys.current && res.current) {
+        if (key in keyMap && keyMap[key] in keys.current && ctrl.current) {
             keys.current[keyMap[key]] = b;
             const {
                 forward,
@@ -95,45 +92,58 @@ function useKeyboard(res: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
                 sample,
                 reset,
                 paused,
+                probe_up,
+                probe_down,
             } = keys.current;
             // power for left and right wheels based on what keys are pressed
-            res.current.state.left = 0;
-            res.current.state.right = 0;
+            ctrl.current.state.left = 0;
+            ctrl.current.state.right = 0;
             if (forward) {
-                res.current.state.left += 1;
-                res.current.state.right += 1;
+                ctrl.current.state.left += 1;
+                ctrl.current.state.right += 1;
             }
             if (backward) {
-                res.current.state.left -= 1;
-                res.current.state.right -= 1;
+                ctrl.current.state.left -= 1;
+                ctrl.current.state.right -= 1;
             }
             if (left) {
-                res.current.state.left -= 1;
-                res.current.state.right += 1;
+                ctrl.current.state.left -= 1;
+                ctrl.current.state.right += 1;
             }
             if (right) {
-                res.current.state.left += 1;
-                res.current.state.right -= 1;
+                ctrl.current.state.left += 1;
+                ctrl.current.state.right -= 1;
             }
             if (brake) {
-                res.current.state.left = 0;
-                res.current.state.right = 0;
+                ctrl.current.state.left = 0;
+                ctrl.current.state.right = 0;
             }
             if (auto) {
                 setState((s) => ({
                     auto: !s.auto,
                 }));
-                res.current.reset();
+                ctrl.current.reset();
             }
-            res.current.state.sample = sample;
+
+            if (probe_up) {
+                ctrl.current.state.probe.Y += 1;
+            }
+
+            if (probe_down) {
+                ctrl.current.state.probe.Y -= 1;
+            }
+
             if (reset && demo.resetPhysics && demo.setPaused) {
                 console.log("reset");
                 demo.resetPhysics();
                 demo.setPaused(false);
             }
+
             if (paused && demo.setPaused) {
                 demo.setPaused((x) => !x);
             }
+
+            ctrl.current.state.sample = sample;
         }
     });
 }

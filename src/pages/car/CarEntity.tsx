@@ -8,6 +8,7 @@ import {
     Vector3Array,
     CuboidCollider,
     BallCollider,
+    usePrismaticJoint,
 } from "@react-three/rapier";
 import { RefObject, createRef, useEffect, useRef, useState } from "react";
 import { useControls } from "./utils/useControls";
@@ -37,37 +38,69 @@ export const WheelJoint = ({
         wheelAnchor,
         rotationAxis,
     ]);
-
+    const wheelVel = useRef(0);
     useFrame(() => {
-        if (joint.current && controls.current) {
+        if (
+            joint.current &&
+            controls.current &&
+            controls.current.state[side] != wheelVel.current
+        ) {
             joint.current.configureMotorVelocity(
                 controls.current.state[side] * WHEEL_VEL,
                 WHEEL_FAC
             );
+            wheelVel.current = controls.current.state[side];
         }
     });
 
     return null;
 };
 
-// interface PokeyProps {
-//     body: RefObject<RapierRigidBody>;
-//     pokey: RefObject<RapierRigidBody>;
-//     bodyAnchor: Vector3Array;
-//     pokeyAnchor: Vector3Array;
-//     rotAxis: Vector3Array;
-// }
+interface PokeyProps {
+    body: RefObject<RapierRigidBody>;
+    pokey: RefObject<RapierRigidBody>;
+    bodyAnchor: Vector3Array;
+    pokeyAnchor: Vector3Array;
+    tranAxis: Vector3Array;
+    ctrl: RefObject<AutoTraceVehicle>;
+}
 
-// export const PokeyJoint = ({body, pokey, bodyAnchor, pokeyAnchor, rotAxis}: PokeyProps) => {
-//     const joint = usePrismaticJoint(body, pokey, [
+export const PokeyJoint = ({
+    body,
+    pokey,
+    bodyAnchor,
+    pokeyAnchor,
+    tranAxis,
+    ctrl,
+}: PokeyProps) => {
+    const joint = usePrismaticJoint(
+        body,
+        pokey,
+        // @ts-ignore
+        [bodyAnchor, pokeyAnchor, tranAxis]
+    );
+    const pokeyPos = useRef(0);
+    useFrame(() => {
+        if (
+            joint.current &&
+            ctrl.current &&
+            ctrl.current.state.probe.Y != pokeyPos.current
+        ) {
+            console.log(ctrl.current.state.probe.Y / 50);
+            joint.current.configureMotorPosition(
+                ctrl.current.state.probe.Y / 30,
+                1000,
+                20
+            );
+            pokeyPos.current = ctrl.current.state.probe.Y;
+        }
+    });
+    return null;
+};
 
-//     ]);
-//     return null;
-// }
-
-// technically the floor is a member of all collision groups by default, but we
+// technically the main col group is a member of all collision groups by default, but we
 // want to pretend it's in 0 just so BODY and WHEEL don't interact.
-export const FLOOR_COL_GROUP = 0;
+export const MAIN_COL_GROUP = 0;
 export const BODY_COL_GROUP = 1;
 export const WHEEL_COL_GROUP = 2;
 
@@ -76,10 +109,15 @@ const WHEEL_FAC = 90;
 
 export function CarEntity({
     position = [-40, -3, 15],
+    rotation = [0, -Math.PI / 1.5, 0],
 }: {
     position?: [number, number, number];
+    rotation?: [number, number, number];
 }) {
+    console.log("Car Entity Rendered");
     const bodyRef = useRef<RapierRigidBody>(null);
+    const pokeyRef = useRef<RapierRigidBody>(null);
+    const pokeyPosition = [-4.25, -1, 0] as [number, number, number];
     const wheelPositions: [number, number, number][] = [
         [3, -0.3, 3.3],
         [3, -0.3, -3.3],
@@ -103,8 +141,8 @@ export function CarEntity({
     );
     const STUPID_VEC = new THREE.Vector3();
     const [canvasRef] = useCanvasMap(floatyBoxesRef);
-    const [kbRef, [{ auto }, setKbState]] = useControls(canvasRef);
-    const handleStart = () => setKbState({ auto: true });
+    const [ctrlRef, [{ auto }, setCtrlState]] = useControls(canvasRef);
+    const handleStart = () => setCtrlState({ auto: true });
     useFrame(() => {
         const parentBox = floatyBoxesRef.current[0].current;
         if (!floatBoxesColorRef.current || !bodyRef.current || !parentBox)
@@ -116,7 +154,10 @@ export function CarEntity({
                 floatBoxesColorRef.current[i].current?.color.setRGB(v, v, v);
             }
         }
-        if (canvasRef.current.luminance.get(0) && kbRef.current.state.sample) {
+        if (
+            canvasRef.current.luminance.get(0) &&
+            ctrlRef.current.state.sample
+        ) {
             const v = canvasRef.current.luminance;
             console.log(v);
             console.log(canvasRef.current.luminance);
@@ -130,7 +171,7 @@ export function CarEntity({
         }
     });
     return (
-        <group position={position} rotation={[0, -Math.PI / 1.5, 0]}>
+        <group position={position} rotation={rotation}>
             <RigidBody
                 colliders={false}
                 ref={bodyRef}
@@ -138,7 +179,7 @@ export function CarEntity({
                 canSleep={false}
                 friction={0}
                 collisionGroups={interactionGroups(BODY_COL_GROUP, [
-                    FLOOR_COL_GROUP,
+                    MAIN_COL_GROUP,
                     BODY_COL_GROUP,
                 ])}
             >
@@ -153,10 +194,10 @@ export function CarEntity({
                         <PerspectiveCamera position={[0, 0, 10]} />
                     </group>
                     <Html>
-                        {canvasRef.current && kbRef.current && (
+                        {canvasRef.current && ctrlRef.current && (
                             <Readout
                                 canvasRef={canvasRef.current}
-                                controlRef={kbRef.current}
+                                controlRef={ctrlRef.current}
                                 bodyRef={bodyRef}
                             />
                         )}
@@ -206,14 +247,19 @@ export function CarEntity({
                     args={[WHEEL, WHEEL, WHEEL, 16]}
                 />
                 <BallCollider
-                    friction={0.1}
+                    friction={-0.1}
                     args={[WHEEL]}
-                    position={[-3, -0.3, 0]}
+                    position={[-3, -0.3, 3.3]}
                 />
                 <Cylinder
                     rotation={[Math.PI / 2, 0, 0]}
                     position={[-3, -0.3, 3.3]}
                     args={[WHEEL, WHEEL, WHEEL, 16]}
+                />
+                <BallCollider
+                    friction={-0.1}
+                    args={[WHEEL]}
+                    position={[-3, -0.3, -3.3]}
                 />
             </RigidBody>
             {wheelPositions.map((wheelPosition, index) => (
@@ -225,7 +271,7 @@ export function CarEntity({
                     ref={wheelRefs.current[index]}
                     friction={2}
                     collisionGroups={interactionGroups(WHEEL_COL_GROUP, [
-                        FLOOR_COL_GROUP,
+                        MAIN_COL_GROUP,
                     ])}
                 >
                     <Cylinder
@@ -244,10 +290,40 @@ export function CarEntity({
                     bodyAnchor={wheelPosition}
                     wheelAnchor={[0, 0, 0]}
                     rotationAxis={[0, 0, 1]}
-                    controls={kbRef}
+                    controls={ctrlRef}
                     side={indexSides[index]}
                 />
             ))}
+            {/* pokey boy */}
+            <RigidBody
+                position={pokeyPosition}
+                type="dynamic"
+                ref={pokeyRef}
+                friction={1}
+            >
+                {/* plate */}
+                <Box args={[0.3, 4, 4]} position={[0, 2, 0]}>
+                    <meshStandardMaterial color={"grey"} />
+                </Box>
+                {/* catch */}
+                <Box args={[0.8, 0.3, 4]} position={[0.55, 2.5, 0]}>
+                    <meshStandardMaterial color={"grey"} />
+                </Box>
+                <Box args={[1, 0.3, 1]} position={[-0.65, 0.15, 1.5]}>
+                    <meshStandardMaterial color={"grey"} />
+                </Box>
+                <Box args={[1, 0.3, 1]} position={[-0.65, 0.15, -1.5]}>
+                    <meshStandardMaterial color={"grey"} />
+                </Box>
+            </RigidBody>
+            <PokeyJoint
+                body={bodyRef}
+                pokey={pokeyRef}
+                bodyAnchor={pokeyPosition}
+                pokeyAnchor={[0, 0, 0]}
+                tranAxis={[0, 1, 0]}
+                ctrl={ctrlRef}
+            />
         </group>
     );
 }
