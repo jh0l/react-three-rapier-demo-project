@@ -84,17 +84,19 @@ export default class AutoTraceVehicle {
     }
     parseCommandBarMaker(cbm: CommandBarMaker, next: () => void): CommandBar {
         const complete = { current: 0 };
+        const nextCount = () => {
+            complete.current -= 1;
+            if (complete.current <= 0) next();
+        };
         const parseCommandBarMakerUnit = (
             cbmu: CommandBarMakerUnit
         ): [CommandMaker[], Trigger] => {
             const [cmdmkr, trigmkr] = cbmu;
-            let trig = () => false;
+            let trig: Trigger = () => false;
             if (trigmkr) {
-                trig = () => {
-                    const res = trigmkr(next, this.can, this.state);
-                    if (res) complete.current -= 1;
-                    return res;
-                }
+                trig = trigmkr(nextCount, this.can, this.state);
+                complete.current += 1;
+            }
             const cmds: CommandMaker[] = [];
             if (typeof cmdmkr === "function") {
                 cmds.push(cmdmkr);
@@ -120,7 +122,7 @@ export default class AutoTraceVehicle {
 
     nextCommand() {
         const { cmds } = this.state;
-        cmds.command = thisparseCommandBarMaker(cmds.queue[cmds.idx]);
+        cmds.command = this.parseCommandBarMaker(cmds.queue[cmds.idx]);
         cmds.idx += 1;
     }
 
