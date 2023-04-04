@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useFrame } from "@react-three/fiber";
+import { useJitRef } from "../../../utils";
 
 class Luminance {
     top = 0;
@@ -57,11 +58,11 @@ export function useCanvasMap(floatyBoxesRef: FloatyBoxesType) {
             setImage(img);
         };
     }, []);
-    const canvasRef = useRef<CanvasRes>({
+    const canvasRef = useJitRef<CanvasRes>(() => ({
         canvas: null as null | CanvasRenderingContext2D,
         luminance: new Luminance(),
         vectors: [],
-    });
+    }));
     const STUPID_VEC = new THREE.Vector3();
     const getColorAtIntersection = () => {
         if (!image) return null;

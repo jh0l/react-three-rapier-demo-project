@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import { useAppContext } from "../../../App";
 import AutoTraceVehicle from "./autoTraceVehicle";
 import { CONTROL_VALUES } from "../components/OnScreenControls/OnScreenControls";
+import { useJitRef } from "../../../utils";
 
 export interface ControlState {
     auto: boolean;
@@ -16,8 +17,8 @@ type StateArr = [
 export function useControls(canvasRef: RefObject<CanvasRes>) {
     const stateArr = useState({ auto: false });
     const [state, setState] = stateArr;
-    const ref = useRef<AutoTraceVehicle>(
-        new AutoTraceVehicle(canvasRef.current!)
+    const ref = useJitRef<AutoTraceVehicle>(
+        () => new AutoTraceVehicle(canvasRef.current!)
     );
     const { paused } = useAppContext();
     console.log(paused);
@@ -32,7 +33,7 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
             console.log(canvasRef.current?.luminance);
         }
         // apply onscreencontrol values
-        ref.current.applyControlValues(CONTROL_VALUES);
+        ref.current.applyXY(CONTROL_VALUES);
     });
 
     return [ref, stateArr] as const;
@@ -72,8 +73,8 @@ const keyMap: KeyMapType<string> = {
 
 function useKeyboard(ctrl: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
     const [, setState] = stateArr;
-    const demo = useAppContext();
-    const keys = useRef<KeyMapType<boolean>>(
+    const app = useAppContext();
+    const keys = useJitRef<KeyMapType<boolean>>(() =>
         Object.values(keyMap).reduce(
             (a, b) => ({ ...a, [b]: false }),
             {} as any
@@ -96,28 +97,12 @@ function useKeyboard(ctrl: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
                 probe_down,
             } = keys.current;
             // power for left and right wheels based on what keys are pressed
-            ctrl.current.state.left = 0;
-            ctrl.current.state.right = 0;
-            if (forward) {
-                ctrl.current.state.left += 1;
-                ctrl.current.state.right += 1;
-            }
-            if (backward) {
-                ctrl.current.state.left -= 1;
-                ctrl.current.state.right -= 1;
-            }
-            if (left) {
-                ctrl.current.state.left -= 1;
-                ctrl.current.state.right += 1;
-            }
-            if (right) {
-                ctrl.current.state.left += 1;
-                ctrl.current.state.right -= 1;
-            }
-            if (brake) {
-                ctrl.current.state.left = 0;
-                ctrl.current.state.right = 0;
-            }
+            ctrl.current.cmds.drive(0, 0);
+            if (forward) ctrl.current.cmds.addDrive(1, 1);
+            if (backward) ctrl.current.cmds.addDrive(-1, -1);
+            if (left) ctrl.current.cmds.addDrive(-1, 1);
+            if (right) ctrl.current.cmds.addDrive(1, -1);
+            if (brake) ctrl.current.cmds.addDrive(0, 0);
             if (auto) {
                 setState((s) => ({
                     auto: !s.auto,
@@ -125,22 +110,17 @@ function useKeyboard(ctrl: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
                 ctrl.current.reset();
             }
 
-            if (probe_up) {
-                ctrl.current.state.probe.Y += 1;
-            }
+            if (probe_up) ctrl.current.cmds.addProbe(1);
+            if (probe_down) ctrl.current.cmds.addProbe(-1);
 
-            if (probe_down) {
-                ctrl.current.state.probe.Y -= 1;
-            }
-
-            if (reset && demo.resetPhysics && demo.setPaused) {
+            if (reset && app.resetPhysics && app.setPaused) {
                 console.log("reset");
-                demo.resetPhysics();
-                demo.setPaused(false);
+                app.resetPhysics();
+                app.setPaused(false);
             }
 
-            if (paused && demo.setPaused) {
-                demo.setPaused((x) => !x);
+            if (paused && app.setPaused) {
+                app.setPaused((x) => !x);
             }
 
             ctrl.current.state.sample = sample;

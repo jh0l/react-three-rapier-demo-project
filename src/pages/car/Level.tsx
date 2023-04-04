@@ -4,6 +4,7 @@ import { CarEntity } from "./CarEntity";
 import { useRef } from "react";
 import { MeshStandardMaterial } from "three";
 import { RigidBody } from "@react-three/rapier";
+import { useJitRef } from "../../utils";
 
 export default function Level() {
     return (
@@ -19,12 +20,13 @@ export default function Level() {
 }
 
 function FuelStation() {
-    const mat = useRef(
-        new MeshStandardMaterial({
-            color: "yellow",
-            opacity: 0.9,
-            transparent: true,
-        })
+    const mat = useJitRef(
+        () =>
+            new MeshStandardMaterial({
+                color: "yellow",
+                opacity: 0.9,
+                transparent: true,
+            })
     );
     return (
         <>

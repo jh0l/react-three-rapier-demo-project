@@ -15,6 +15,8 @@ import { useControls } from "./utils/useControls";
 import { CanvasRes, useCanvasMap } from "./utils/useCanvasMap";
 import * as THREE from "three";
 import AutoTraceVehicle from "./utils/autoTraceVehicle";
+import { useAppContext } from "../../App";
+import { useJitRef } from "../../utils";
 
 export const WheelJoint = ({
     body,
@@ -43,13 +45,13 @@ export const WheelJoint = ({
         if (
             joint.current &&
             controls.current &&
-            controls.current.state[side] != wheelVel.current
+            controls.current.cmds.getDrive(side) != wheelVel.current
         ) {
             joint.current.configureMotorVelocity(
-                controls.current.state[side] * WHEEL_VEL,
+                controls.current.cmds.getDrive(side) * WHEEL_VEL,
                 WHEEL_FAC
             );
-            wheelVel.current = controls.current.state[side];
+            wheelVel.current = controls.current.cmds.getDrive(side);
         }
     });
 
@@ -84,15 +86,15 @@ export const PokeyJoint = ({
         if (
             joint.current &&
             ctrl.current &&
-            ctrl.current.state.probe.Y != pokeyPos.current
+            ctrl.current.cmds.getProbe("Y") != pokeyPos.current
         ) {
-            console.log(ctrl.current.state.probe.Y / 50);
+            console.log(ctrl.current.cmds.getProbe("Y") / 50);
             joint.current.configureMotorPosition(
-                ctrl.current.state.probe.Y / 30,
+                ctrl.current.cmds.getProbe("Y") / 50,
                 1000,
                 20
             );
-            pokeyPos.current = ctrl.current.state.probe.Y;
+            pokeyPos.current = ctrl.current.cmds.getProbe("Y");
         }
     });
     return null;
@@ -130,13 +132,13 @@ export function CarEntity({
     ];
     const WHEEL = 1.35;
     const indexSides = ["left", "right"] as const;
-    const floatyBoxesRef = useRef(
+    const floatyBoxesRef = useJitRef(() =>
         sensorPositions.map(() => createRef<THREE.Mesh>())
     );
-    const floatBoxesColorRef = useRef(
+    const floatBoxesColorRef = useJitRef(() =>
         sensorPositions.map(() => createRef<THREE.MeshPhysicalMaterial>())
     );
-    const wheelRefs = useRef(
+    const wheelRefs = useJitRef(() =>
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
     const STUPID_VEC = new THREE.Vector3();
@@ -358,7 +360,16 @@ interface ReadoutProps {
     controlRef: AutoTraceVehicle;
     bodyRef: RefObject<RapierRigidBody>;
 }
-export function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
+function Readout(props: ReadoutProps) {
+    const ctx = useAppContext();
+    console.log(ctx);
+    if (!ctx.debug) {
+        return <Readout_ {...props} />;
+    } else {
+        return <></>;
+    }
+}
+function Readout_({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
     const [data, setData] = useState("");
     const ref = useRef<number>(0);
     useEffect(() => {
@@ -369,18 +380,21 @@ export function Readout({ canvasRef, controlRef, bodyRef }: ReadoutProps) {
                     v.toFixed(1).padEnd(5, " ")
                 );
                 const loc = `x:${xs} y:${ys} z:${zs}`;
-                const [LW, RW] = [
-                    controlRef.state.left,
-                    controlRef.state.right,
-                ].map((x) => String(x).padEnd(4, " "));
+                const [LW, RW] = controlRef.cmds._drive.map((x) =>
+                    String(x).padEnd(4, " ")
+                );
                 let LR = `LW:${LW} RW:${RW}`;
                 const [T, L, B, R] = canvasRef.luminance.map((x) =>
                     String(x).padEnd(4, " ")
                 );
                 const LUM = `T:${T} L:${L}\nB:${B} R:${R}`;
                 const frame = `F: ${controlRef.state.tick} `;
-                const cmd = `${controlRef.state.cmds.command.name}:${controlRef.state.cmds.idx}`;
-                const arr = [loc, LR, LUM, frame + cmd];
+                const arr = [loc, LR, LUM, frame];
+                arr[arr.length - 1] += " i:" + controlRef.state.cmds.idx;
+                for (let { name } of controlRef.state.cmds.commands) {
+                    const cmd = ` ${name}`;
+                    arr[arr.length - 1] += cmd;
+                }
                 setData(arr.join("\n"));
             }
         }, 200);

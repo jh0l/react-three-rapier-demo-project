@@ -21,6 +21,7 @@ import OnScreenControls from "./pages/car/components/OnScreenControls/OnScreenCo
 
 const appContext = createContext<{
     setDebug?(f: boolean): void;
+    debug?: boolean;
     setPaused?: React.Dispatch<React.SetStateAction<boolean>>;
     setCameraEnabled?(f: boolean): void;
     resetPhysics?(): void;
@@ -80,6 +81,7 @@ export const App = () => {
 
     const context = {
         setDebug,
+        debug,
         setPaused,
         setCameraEnabled,
         resetPhysics,
@@ -95,74 +97,84 @@ export const App = () => {
                 fontFamily: "sans-serif",
             }}
         >
-            <Suspense fallback={<Loading />}>
-                <Canvas>
-                    <OrbitControls enabled={cameraEnabled} />
-                    <PerspectiveCamera position={[10, 5, 0]} makeDefault />
-                    <StrictMode>
-                        <Physics
-                            paused={paused}
-                            key={physicsKey}
-                            gravity={[0, -200, 0]}
-                        >
-                            <directionalLight
-                                castShadow
-                                position={[10, 10, 10]}
-                                shadow-camera-bottom={-40}
-                                shadow-camera-top={40}
-                                shadow-camera-left={-40}
-                                shadow-camera-right={40}
-                                shadow-mapSize-width={1024}
-                                shadow-bias={-0.0001}
-                            />
-                            <Environment preset="city" />
+            <appContext.Provider value={context}>
+                <Suspense fallback={<Loading />}>
+                    <Canvas>
+                        <OrbitControls
+                            enabled={cameraEnabled}
+                            target={[-40, 0, -6]}
+                        />
+                        <PerspectiveCamera
+                            position={[-30, 30, -5]}
+                            makeDefault
+                        />
+                        <StrictMode>
+                            <Physics
+                                paused={paused}
+                                key={physicsKey}
+                                gravity={[0, -200, 0]}
+                            >
+                                <directionalLight
+                                    castShadow
+                                    position={[10, 10, 10]}
+                                    shadow-camera-bottom={-40}
+                                    shadow-camera-top={40}
+                                    shadow-camera-left={-40}
+                                    shadow-camera-right={40}
+                                    shadow-mapSize-width={1024}
+                                    shadow-bias={-0.0001}
+                                />
+                                <Environment preset="city" />
 
-                            <appContext.Provider value={context}>
                                 <Level />
-                            </appContext.Provider>
 
-                            <Floor />
+                                <Floor />
 
-                            {debug && <Debug />}
-                            {perf && <Perf />}
-                        </Physics>
-                    </StrictMode>
-                </Canvas>
-            </Suspense>
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: 24,
-                    left: 24,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 12,
-                    maxWidth: 600,
-                }}
-            >
-                <ToggleButton
-                    label="Debug"
-                    value={debug}
-                    onClick={() => setDebug((v) => !v)}
-                />
-                <ToggleButton
-                    label="Perf"
-                    value={perf}
-                    onClick={() => setPerf((v) => !v)}
-                />
-                <ToggleButton
-                    label="Paused"
-                    value={paused}
-                    onClick={() => setPaused((v) => !v)}
-                />
-                <ToggleButton
-                    label="Reset"
-                    value={false}
-                    onClick={resetPhysics}
-                />
-                <ToggleButton label="Home" value={false} onClick={() => {}} />
-            </div>
-            <OnScreenControls />
+                                {debug && <Debug />}
+                                {perf && <Perf />}
+                            </Physics>
+                        </StrictMode>
+                    </Canvas>
+                </Suspense>
+                <div
+                    style={{
+                        position: "absolute",
+                        bottom: 24,
+                        left: 24,
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 12,
+                        maxWidth: 600,
+                    }}
+                >
+                    <ToggleButton
+                        label="Debug"
+                        value={debug}
+                        onClick={() => setDebug((v) => !v)}
+                    />
+                    <ToggleButton
+                        label="Perf"
+                        value={perf}
+                        onClick={() => setPerf((v) => !v)}
+                    />
+                    <ToggleButton
+                        label="Paused"
+                        value={paused}
+                        onClick={() => setPaused((v) => !v)}
+                    />
+                    <ToggleButton
+                        label="Reset"
+                        value={false}
+                        onClick={resetPhysics}
+                    />
+                    <ToggleButton
+                        label="Home"
+                        value={false}
+                        onClick={() => {}}
+                    />
+                </div>
+                <OnScreenControls />
+            </appContext.Provider>
         </div>
     );
 };
