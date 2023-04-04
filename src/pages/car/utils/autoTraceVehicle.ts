@@ -12,16 +12,12 @@ interface ControlFrame {
 
 interface State {
     record: ControlFrame[];
-    left: number;
-    right: number;
-    probe: {
-        X: number;
-        Y: number;
-    };
     cmds: {
         queue: CommandBarMaker[];
-        command: CommandBar;
+        commands: Command[];
         idx: number;
+        processed: Command[][];
+        assignNext: boolean;
     };
     sample: boolean;
     tick: number;
@@ -30,72 +26,45 @@ interface State {
 export default class AutoTraceVehicle {
     can: CanvasRes;
     state: State;
-    cmdArgs = new CommandParam();
+    cmds = new CommandParam();
     constructor(can: CanvasRes) {
+        console.log("AutoTraceVehicle constructor");
         this.can = can;
         this.state = {
             record: new Array(2000),
-            left: 0,
-            right: 0,
-            probe: {
-                X: 0,
-                Y: 0,
-            },
             cmds: {
-                queue: [
-                    [go, timer(20)],
-                    [trace(0.8), intersection("R")],
-                    [stop, timer(5)],
-                    [align, timer(10)],
-                    [drive([0]), timer(8)],
-                    [drive([-1]), timer(20)],
-                    [drive([-1, 0.6]), intersection("I")],
-                    [trace(), intersection("R")],
-                    [stop, timer(3)],
-                    [trace(), intersection("T")],
-                    [drive([-1, 0.6]), timer(40)],
-                    [drive([0, 0.6]), timer(30)],
-                    [drive([1, 0.6]), timer(40)],
-                    [drive([0, -0.6]), timer(40)],
-                    [drive([1, 1]), timer(60)],
-                    [drive([1, 0.6]), intersection("I")],
-                    [align, timer(15)],
-                    [drive([0, 0.8]), timer(10)],
-                    [trace(), intersection("L")],
-                    [stop, timer(3)],
-                    [trace(), intersection("T")],
-                    [drive([0, -1]), timer(10)],
-                    [drive([-1, -1]), timer(18)],
-                    [drive([0.5, 1]), timer(23)],
-                    [drive([1, 0.6]), intersection("I")],
-                    [align, timer(10)],
-                    [trace(), intersection("W")],
-                    [drive([0]), timer(38)],
-                    [drive([1, 0.7]), timer(120)],
-                    [stop, done],
-                ],
+                queue: FUELSTATION_TEST,
                 idx: -1,
-                command: [],
+                commands: [],
+                processed: [],
+                assignNext: false,
             },
             sample: false,
             tick: 0,
         };
-        this.cmdArgs = new CommandParam();
+        this.cmds = new CommandParam();
     }
-    parseCommandBarMaker(cbm: CommandBarMaker, next: () => void): CommandBar {
-        const complete = { current: 0 };
-        const nextCount = () => {
-            complete.current -= 1;
-            if (complete.current <= 0) next();
+    assignNextCommandBar() {
+        const { cmds } = this.state;
+        let cbm = cmds.queue[cmds.idx];
+        // we want to use the idx before incrementing it so we dont skip things
+        cmds.idx += 1;
+        const complete: boolean[] = [];
+        const nextCount = (trigId: number) => () => {
+            complete[trigId] = true;
+            // defer calling assignNextCommandBar until all triggers have been called
+            if (!complete.includes(false)) cmds.assignNext = true;
         };
+        let trigId = 0;
         const parseCommandBarMakerUnit = (
             cbmu: CommandBarMakerUnit
         ): [CommandMaker[], Trigger] => {
             const [cmdmkr, trigmkr] = cbmu;
             let trig: Trigger = () => false;
             if (trigmkr) {
-                trig = trigmkr(nextCount, this.can, this.state);
-                complete.current += 1;
+                trig = trigmkr(nextCount(trigId), this.can, this.state);
+                complete[trigId] = false;
+                trigId += 1;
             }
             const cmds: CommandMaker[] = [];
             if (typeof cmdmkr === "function") {
@@ -117,15 +86,28 @@ export default class AutoTraceVehicle {
                 res.push(parseCommandBarMakerUnit(cbmu));
             }
         }
-        return res;
+        this.state.cmds.processed.push(this.state.cmds.commands);
+        this.state.cmds.commands = [];
+        let i = 0;
+        for (const cmdset of res) {
+            const [cmds, trig] = cmdset;
+            for (const cmd of cmds) {
+                const _i = i;
+                // remove this command from commands if trigger is triggered
+                // to prevent it from running again if other commands aren't triggered yet
+                const rmCmdTrig = () => {
+                    const res = trig();
+                    if (res) {
+                        this.state.cmds.commands[_i] = blank;
+                    }
+                    return res;
+                };
+                const c = cmd(rmCmdTrig, this.can, this.state);
+                this.state.cmds.commands[_i] = c;
+                i += 1;
+            }
+        }
     }
-
-    nextCommand() {
-        const { cmds } = this.state;
-        cmds.command = this.parseCommandBarMaker(cmds.queue[cmds.idx]);
-        cmds.idx += 1;
-    }
-
     // runs the command
     // returns true if there are more commands to run
     // returns false if there are no more commands to run
@@ -134,12 +116,19 @@ export default class AutoTraceVehicle {
         if (cmds.idx < 0 && cmds.queue.length) {
             // get first command ready
             cmds.idx = 0;
-            this.nextCommand();
+            this.assignNextCommandBar();
         }
         if (cmds.idx < cmds.queue.length) {
             // run current command and apply (cleaned) output
-            cmds.command(this.cmdArgs);
-            [this.state.left, this.state.right] = this.cmdArgs._drive;
+            // cmds.commands(this.cmdArgs);
+            for (const cmd of cmds.commands) {
+                cmd(this.cmds);
+            }
+            if (cmds.assignNext) {
+                // assign next command bar
+                cmds.assignNext = false;
+                this.assignNextCommandBar();
+            }
             this.state.tick += 1;
         } else {
             // reset
@@ -153,27 +142,16 @@ export default class AutoTraceVehicle {
         cmds.idx = -1;
         this.state.record = new Array(2000);
         this.state.tick = 0;
-        this.cmdArgs = new CommandParam();
+        this.cmds = new CommandParam();
     }
 
-    applyControlValues({
-        x,
-        y,
-        active,
-    }: {
-        x: number;
-        y: number;
-        active: boolean;
-    }) {
+    applyXY({ x, y, active }: { x: number; y: number; active: boolean }) {
         // x is left/right
         // y is forward/backward
         if (active) {
             let lft = -y + x;
             let rgt = -y - x;
-            [this.state.left, this.state.right] = this.cmdArgs.drive(
-                lft,
-                rgt
-            )._drive;
+            this.cmds.drive(lft, rgt);
         }
     }
 }
@@ -190,9 +168,25 @@ class CommandParam {
         if (right !== undefined) this._drive[1] = this.clean(right);
         return this;
     }
-    probe(x?: number, y?: number) {
-        if (x !== undefined) this._probe[0] = x;
-        if (y !== undefined) this._probe[1] = y;
+    addDrive(left?: number, right?: number) {
+        if (left !== undefined) this._drive[0] += this.clean(left);
+        if (right !== undefined) this._drive[1] += this.clean(right);
+        return this;
+    }
+    getDrive(side: "left" | "right") {
+        return this._drive[side === "left" ? 0 : 1];
+    }
+    getProbe(axis: "Y" | "X") {
+        return this._probe[axis === "Y" ? 0 : 1];
+    }
+    probe(y?: number, x?: number) {
+        if (y !== undefined) this._probe[0] = y;
+        if (x !== undefined) this._probe[1] = x;
+        return this;
+    }
+    addProbe(y?: number, x?: number) {
+        if (y !== undefined) this._probe[0] += y;
+        if (x !== undefined) this._probe[1] += x;
         return this;
     }
     clean(x: number): number {
@@ -209,6 +203,7 @@ type Trigger = () => boolean;
 type TriggerMaker = (next: () => void, can: CanvasRes, ref: State) => Trigger;
 type TriggerMakerMaker<T> = (p: T) => TriggerMaker;
 
+// return CommandParam just to make sure we remembered to use it :)
 type Command = (args: CommandParam) => CommandParam;
 
 type CommandMaker = (trigger: Trigger, can: CanvasRes, ref: State) => Command;
@@ -220,7 +215,7 @@ type CommandBar = [CommandMaker[], Trigger][];
 type CommandBarMakerUnit = [CommandMaker | CommandMaker[], TriggerMaker?];
 type CommandBarMaker = CommandBarMakerUnit | CommandBarMakerUnit[];
 
-const blank: Command = (p) => p.drive(0, 0);
+const blank: Command = (p) => p;
 
 const done: TriggerMaker = (next) => () => {
     next();
@@ -360,3 +355,60 @@ const drive: CommandMakerMaker<DriveParam> =
             return args.drive(LEFT * pow, RIGHT * pow);
         };
     };
+
+const probe: CommandMakerMaker<number> = (speed) => (trigger) => {
+    return function probe(args) {
+        if (trigger()) return args;
+        return args.addProbe(speed);
+    };
+};
+
+const FUELSTATION_TEST: CommandBarMaker[] = [
+    [go, timer(20)],
+    [trace(0.8), intersection("R")],
+    [stop, timer(5)],
+    [align, timer(10)],
+    [drive([0]), timer(40)],
+    // [drive([-1]), timer(20)],
+    // [drive([-1, 0.6]), intersection("I")],
+    [drive([-0.5, -1]), timer(88)],
+    [drive([0, 0.5]), timer(38)],
+    [probe(1), timer(60)],
+    [probe(-1), timer(60)],
+    [probe(1), timer(60)],
+    [probe(-1), timer(60)],
+    [stop, done],
+];
+
+const TRACE_TEST: CommandBarMaker[] = [
+    [go, timer(20)],
+    [trace(0.8), intersection("R")],
+    [stop, timer(5)],
+    [align, timer(10)],
+    [drive([0]), timer(8)],
+    [drive([-1]), timer(20)],
+    [drive([-1, 0.6]), intersection("I")],
+    [trace(), intersection("R")],
+    [stop, timer(3)],
+    [trace(), intersection("T")],
+    [drive([-1, 0.6]), timer(40)],
+    [drive([0, 0.6]), timer(30)],
+    [drive([1, 0.6]), timer(40)],
+    [drive([0, -0.6]), timer(40)],
+    [drive([1, 1]), timer(60)],
+    [drive([1, 0.6]), intersection("I")],
+    [align, timer(15)],
+    [drive([0, 0.8]), timer(10)],
+    [trace(), intersection("L")],
+    [stop, timer(3)],
+    [trace(), intersection("T")],
+    [drive([0, -1]), timer(10)],
+    [drive([-1, -1]), timer(18)],
+    [drive([0.5, 1]), timer(23)],
+    [drive([1, 0.6]), intersection("I")],
+    [align, timer(10)],
+    [trace(), intersection("W")],
+    [drive([0]), timer(38)],
+    [drive([1, 0.7]), timer(120)],
+    [stop, done],
+];
