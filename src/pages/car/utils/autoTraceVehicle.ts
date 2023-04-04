@@ -380,6 +380,7 @@ const FUELSTATION_TEST: CommandBarMaker[] = [
     [stop, done],
 ];
 
+//@ts-ignore
 const TRACE_TEST: CommandBarMaker[] = [
     [go, timer(20)],
     [trace(0.8), intersection("R")],

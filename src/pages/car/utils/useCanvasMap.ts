@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useJitRef } from "../../../utils";
 

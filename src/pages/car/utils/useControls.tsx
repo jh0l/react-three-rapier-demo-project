@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
 import { useAppContext } from "../../../App";
