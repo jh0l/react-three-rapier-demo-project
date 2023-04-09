@@ -77,10 +77,10 @@ export default class AutoTraceVehicle {
             return [cmds, trig];
         };
         const res: CommandBar = [];
-        if (typeof cbm[0] === "function") {
+        if (cbm.length === 2 && typeof cbm[1] === "function") {
             cbm = cbm as CommandBarMakerUnit;
             res.push(parseCommandBarMakerUnit(cbm));
-        } else if (typeof cbm[0][0] === "function") {
+        } else {
             cbm = cbm as CommandBarMakerUnit[];
             for (const cbmu of cbm) {
                 res.push(parseCommandBarMakerUnit(cbmu));
@@ -222,11 +222,9 @@ const done: TriggerMaker = (next) => () => {
     return true;
 };
 
-//const none: TriggerMaker = () => () => false;
-
-const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I" | "W"> =
-    (lock) => (next, can: CanvasRes) => {
-        return function intersection() {
+const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I" | "W"> = (lock) =>
+    function _intersection(next, can: CanvasRes) {
+        return function __intersection() {
             const { top, bot, rgt, lft } = can.luminance.keys();
             const [dark, light] =
                 lock === "R"
@@ -254,7 +252,7 @@ const intersection: TriggerMakerMaker<"R" | "L" | "T" | "I" | "W"> =
     };
 
 const go: CommandMaker = (trigger) => {
-    return function go(args) {
+    return function _go(args) {
         if (trigger()) {
             return args.drive(0, 0);
         }
@@ -266,10 +264,9 @@ const go: CommandMaker = (trigger) => {
 // trace returns function that runs every 16ms keeping the robot in the centre of the black line surrounded by two white lines all lines are equal thickness by measuring the brightness of the left and right sensors and the augmented ratio of the darker sensor (lower value) against the lighter sensor (higher value).
 // can is onject that contains brightness values for left and right side sensors
 // trigger is a function that returns true when the command shouldn't be run by the vehicle anymore.
-const trace: CommandMakerMaker<number | void> =
-    (speed = 1) =>
-    (trigger, can) => {
-        return function trace(args) {
+const trace: CommandMakerMaker<number | void> = (speed = 1) =>
+    function _trace(trigger, can) {
+        return function __trace(args) {
             speed = speed || 1;
             if (trigger()) {
                 return args.drive(0, 0);
@@ -294,7 +291,7 @@ const trace: CommandMakerMaker<number | void> =
 // turn the wheels in opposing directions by ratio until left and right sensors reach
 // equalibrium
 const align: CommandMaker = (trigger, can) => {
-    return function align(args) {
+    return function _align(args) {
         let LEFT = 0,
             RIGHT = 0;
         const { lft, rgt } = can.luminance.keys();
@@ -311,9 +308,9 @@ const align: CommandMaker = (trigger, can) => {
 };
 // ms per frame TODO: get better ticks
 const timer: TriggerMakerMaker<number> = (ticks) => {
-    return function timer(next, _, refState) {
+    return function _timer(next, _, refState) {
         const state = { started: false, time: 0 };
-        return () => {
+        return function __timer() {
             const { tick } = refState;
             if (!state.started) {
                 state.started = true;
@@ -356,12 +353,13 @@ const drive: CommandMakerMaker<DriveParam> =
         };
     };
 
-const probe: CommandMakerMaker<number> = (speed) => (trigger) => {
-    return function probe(args) {
-        if (trigger()) return args;
-        return args.addProbe(speed);
+const probe: CommandMakerMaker<number> = (speed) =>
+    function _probe(trigger) {
+        return function __probe(args) {
+            if (trigger()) return args;
+            return args.addProbe(speed);
+        };
     };
-};
 
 const FUELSTATION_TEST: CommandBarMaker[] = [
     [go, timer(20)],
