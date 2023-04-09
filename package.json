@@ -26,7 +26,8 @@
         "tailwindcss": "^3.2.7",
         "three": "0.146.0",
         "three-mesh-bvh": "^0.5.13",
-        "three-stdlib": "*"
+        "three-stdlib": "*",
+        "zustand": "^4.3.7"
     },
     "devDependencies": {
         "@types/react": "^18.0.28",
