@@ -88,9 +88,8 @@ export const PokeyJoint = ({
             ctrl.current &&
             ctrl.current.cmds.getProbe("Y") != pokeyPos.current
         ) {
-            console.log(ctrl.current.cmds.getProbe("Y") / 50);
             joint.current.configureMotorPosition(
-                ctrl.current.cmds.getProbe("Y") / 50,
+                ctrl.current.cmds.getProbe("Y") / 30,
                 1000,
                 20
             );

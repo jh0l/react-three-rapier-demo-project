@@ -1,8 +1,8 @@
 import {
     Box,
     Environment,
-    // OrthographicCamera,
-    PerspectiveCamera,
+    OrthographicCamera,
+    // PerspectiveCamera,
     OrbitControls,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
@@ -82,14 +82,15 @@ const Floor = () => {
                 position={[0, -12, 0]}
                 scale={[200, 10, 200]}
                 rotation={[0, 0, 0]}
-                receiveShadow
             >
                 <shadowMaterial opacity={0.2} />
             </Box>
         </RigidBody>
     );
 };
-
+const CAM_LOC: [number, number, number] = [20, 70, 40];
+const TARG_LOC: [number, number, number] = [-20, 0, -5];
+const CAM_ZOOM = 20;
 export const App = () => {
     const {
         cameraEnabled,
