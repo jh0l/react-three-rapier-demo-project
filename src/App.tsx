@@ -97,84 +97,45 @@ export const App = () => {
                 fontFamily: "sans-serif",
             }}
         >
-            <appContext.Provider value={context}>
-                <Suspense fallback={<Loading />}>
-                    <Canvas>
-                        <OrbitControls
-                            enabled={cameraEnabled}
-                            target={[-40, 0, -6]}
-                        />
-                        <PerspectiveCamera
-                            position={[-30, 30, -5]}
-                            makeDefault
-                        />
-                        <StrictMode>
-                            <Physics
-                                paused={paused}
-                                key={physicsKey}
-                                gravity={[0, -200, 0]}
-                            >
-                                <directionalLight
-                                    castShadow
-                                    position={[10, 10, 10]}
-                                    shadow-camera-bottom={-40}
-                                    shadow-camera-top={40}
-                                    shadow-camera-left={-40}
-                                    shadow-camera-right={40}
-                                    shadow-mapSize-width={1024}
-                                    shadow-bias={-0.0001}
-                                />
-                                <Environment preset="city" />
+            <Suspense fallback={<Loading />}>
+                <Canvas shadows>
+                    <OrbitControls enabled={cameraEnabled} target={TARG_LOC} />
+                    <OrthographicCamera
+                        position={CAM_LOC}
+                        zoom={CAM_ZOOM}
+                        makeDefault
+                    />
+                    <StrictMode>
+                        <Physics
+                            paused={paused}
+                            key={physicsKey}
+                            gravity={[0, -200, 0]}
+                        >
+                            <directionalLight
+                                castShadow
+                                position={[10, 10, 10]}
+                                shadow-camera-bottom={-40}
+                                shadow-camera-top={40}
+                                shadow-camera-left={-40}
+                                shadow-camera-right={40}
+                                shadow-mapSize-width={1024}
+                                shadow-bias={-0.0001}
+                            />
+                            <Environment
+                                // preset="city"
+                                files="./potsdamer_platz_1k.hdr"
+                            />
 
-                                <Level />
+                            <Level />
 
-                                <Floor />
+                            <Floor />
 
-                                {debug && <Debug />}
-                                {perf && <Perf />}
-                            </Physics>
-                        </StrictMode>
-                    </Canvas>
-                </Suspense>
-                <div
-                    style={{
-                        position: "absolute",
-                        bottom: 24,
-                        left: 24,
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: 12,
-                        maxWidth: 600,
-                    }}
-                >
-                    <ToggleButton
-                        label="Debug"
-                        value={debug}
-                        onClick={() => setDebug((v) => !v)}
-                    />
-                    <ToggleButton
-                        label="Perf"
-                        value={perf}
-                        onClick={() => setPerf((v) => !v)}
-                    />
-                    <ToggleButton
-                        label="Paused"
-                        value={paused}
-                        onClick={() => setPaused((v) => !v)}
-                    />
-                    <ToggleButton
-                        label="Reset"
-                        value={false}
-                        onClick={resetPhysics}
-                    />
-                    <ToggleButton
-                        label="Home"
-                        value={false}
-                        onClick={() => {}}
-                    />
-                </div>
-                <OnScreenControls />
-            </appContext.Provider>
+                            {debug && <Debug />}
+                            {perf && <Perf />}
+                        </Physics>
+                    </StrictMode>
+                </Canvas>
+            </Suspense>
         </div>
     );
 };
