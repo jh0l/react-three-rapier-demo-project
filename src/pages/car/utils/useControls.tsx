@@ -1,7 +1,7 @@
 import { RefObject, useEffect, useState } from "react";
 import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
-import { useAppContext } from "../../../App";
+import { useAppStore } from "../../../App";
 import AutoTraceVehicle from "./autoTraceVehicle";
 import { CONTROL_VALUES } from "../components/OnScreenControls/OnScreenControls";
 import { useJitRef } from "../../../utils";
@@ -20,7 +20,7 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
     const ref = useJitRef<AutoTraceVehicle>(
         () => new AutoTraceVehicle(canvasRef.current!)
     );
-    const { paused } = useAppContext();
+    const { paused } = useAppStore();
     console.log(paused);
 
     useKeyboard(ref, stateArr);
@@ -73,7 +73,7 @@ const keyMap: KeyMapType<string> = {
 
 function useKeyboard(ctrl: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
     const [, setState] = stateArr;
-    const app = useAppContext();
+    const app = useAppStore();
     const keys = useJitRef<KeyMapType<boolean>>(() =>
         Object.values(keyMap).reduce(
             (a, b) => ({ ...a, [b]: false }),
@@ -103,25 +103,18 @@ function useKeyboard(ctrl: RefObject<AutoTraceVehicle>, stateArr: StateArr) {
             if (left) ctrl.current.cmds.addDrive(-1, 1);
             if (right) ctrl.current.cmds.addDrive(1, -1);
             if (brake) ctrl.current.cmds.addDrive(0, 0);
-            if (auto) {
-                setState((s) => ({
-                    auto: !s.auto,
-                }));
-                ctrl.current.reset();
-            }
-
             if (probe_up) ctrl.current.cmds.addProbe(1);
             if (probe_down) ctrl.current.cmds.addProbe(-1);
 
-            if (reset && app.resetPhysics && app.setPaused) {
+            if (auto) setState((s) => ({ auto: !s.auto }));
+
+            if (reset) {
                 console.log("reset");
                 app.resetPhysics();
-                app.setPaused(false);
+                if (app.paused) app.altPaused();
             }
 
-            if (paused && app.setPaused) {
-                app.setPaused((x) => !x);
-            }
+            if (paused) app.altPaused();
 
             ctrl.current.state.sample = sample;
         }

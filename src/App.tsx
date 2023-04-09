@@ -8,27 +8,49 @@ import {
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
 import { Perf } from "r3f-perf";
-import {
-    createContext,
-    Suspense,
-    useContext,
-    useState,
-    StrictMode,
-} from "react";
+import { Suspense, StrictMode } from "react";
+import { create } from "zustand";
+import { devtools, persist, createJSONStorage } from "zustand/middleware";
 
 import Level from "./pages/car/Level";
 import OnScreenControls from "./pages/car/components/OnScreenControls/OnScreenControls";
 
-const appContext = createContext<{
-    setDebug?(f: boolean): void;
-    debug?: boolean;
-    setPaused?: React.Dispatch<React.SetStateAction<boolean>>;
-    setCameraEnabled?(f: boolean): void;
-    resetPhysics?(): void;
-    paused?: boolean;
-}>({});
+interface AppState {
+    debug: true | false;
+    altDebug: () => void;
+    paused: boolean;
+    altPaused: () => void;
+    cameraEnabled: boolean;
+    setCameraEnabled: (f: boolean) => void;
+    perf: boolean;
+    altPerf: () => void;
+    physicsKey: number;
+    resetPhysics: () => void;
+}
 
-export const useAppContext = () => useContext(appContext);
+export const useAppStore = create<AppState>()(
+    devtools(
+        persist(
+            (set) => ({
+                debug: true,
+                altDebug: () => set((state) => ({ debug: !state.debug })),
+                paused: false,
+                altPaused: () => set((state) => ({ paused: !state.paused })),
+                cameraEnabled: true,
+                setCameraEnabled: (f) => set({ cameraEnabled: f }),
+                perf: true,
+                altPerf: () => set((state) => ({ perf: !state.perf })),
+                physicsKey: 0,
+                resetPhysics: () =>
+                    set((state) => ({ physicsKey: state.physicsKey + 1 })),
+            }),
+            {
+                name: "robosim-storage", // unique name
+                storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+            }
+        )
+    )
+);
 
 const ToggleButton = ({
     label,
@@ -69,25 +91,17 @@ const Floor = () => {
 };
 
 export const App = () => {
-    const [debug, setDebug] = useState<boolean>(true);
-    const [perf, setPerf] = useState<boolean>(false);
-    const [paused, setPaused] = useState<boolean>(false);
-    const [physicsKey, setPhysicsKey] = useState<number>(0);
-    const [cameraEnabled, setCameraEnabled] = useState<boolean>(true);
-
-    const resetPhysics = () => {
-        setPhysicsKey((current) => current + 1);
-    };
-
-    const context = {
-        setDebug,
+    const {
+        cameraEnabled,
         debug,
-        setPaused,
-        setCameraEnabled,
-        resetPhysics,
+        altDebug,
         paused,
-    };
-
+        altPaused,
+        physicsKey,
+        perf,
+        altPerf,
+        resetPhysics,
+    } = useAppStore();
     return (
         <div
             style={{
@@ -136,6 +150,32 @@ export const App = () => {
                     </StrictMode>
                 </Canvas>
             </Suspense>
+            <div
+                style={{
+                    position: "absolute",
+                    bottom: 24,
+                    left: 24,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 12,
+                    maxWidth: 600,
+                }}
+            >
+                <ToggleButton label="Debug" value={debug} onClick={altDebug} />
+                <ToggleButton
+                    label="Paused"
+                    value={paused}
+                    onClick={altPaused}
+                />
+                <ToggleButton label="Perf" value={perf} onClick={altPerf} />
+                <ToggleButton
+                    label="Reset"
+                    value={false}
+                    onClick={resetPhysics}
+                />
+                <ToggleButton label="Home" value={false} onClick={() => {}} />
+            </div>
+            <OnScreenControls />
         </div>
     );
 };

@@ -15,7 +15,7 @@ import { useControls } from "./utils/useControls";
 import { CanvasRes, useCanvasMap } from "./utils/useCanvasMap";
 import * as THREE from "three";
 import AutoTraceVehicle from "./utils/autoTraceVehicle";
-import { useAppContext } from "../../App";
+import { useAppStore } from "../../App";
 import { useJitRef } from "../../utils";
 
 export const WheelJoint = ({
@@ -365,9 +365,9 @@ interface ReadoutProps {
     bodyRef: RefObject<RapierRigidBody>;
 }
 function Readout(props: ReadoutProps) {
-    const ctx = useAppContext();
+    const ctx = useAppStore();
     console.log(ctx);
-    if (!ctx.debug) {
+    if (ctx.debug) {
         return <Readout_ {...props} />;
     } else {
         return <></>;
