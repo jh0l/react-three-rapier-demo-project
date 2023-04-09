@@ -311,8 +311,12 @@ export function CarEntity({
                 <Box args={[0.8, 0.3, 4]} position={[0.55, 2.5, 0]}>
                     <meshStandardMaterial color={"grey"} />
                 </Box>
-                <Box args={[1, 0.3, 1]} position={[-0.65, 0.15, 1.5]}>
+                {/* forks */}
+                <Box args={[1, 0.3, 0.3]} position={[-0.65, 1.15, 1.5]}>
                     <meshStandardMaterial color={"grey"} />
+                    <Box args={[0.3, 1, 0.3]} position={[-0.35, -0.65, 0]}>
+                        <meshStandardMaterial color={"grey"} />
+                    </Box>
                 </Box>
                 <Box args={[1, 0.3, 1]} position={[-0.65, 0.15, -1.5]}>
                     <meshStandardMaterial color={"grey"} />
