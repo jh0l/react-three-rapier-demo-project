@@ -8,15 +8,15 @@ import {
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
 import { Perf } from "r3f-perf";
-import { Suspense, StrictMode } from "react";
+import { Suspense, StrictMode, useEffect } from "react";
 import { create } from "zustand";
-import { devtools, persist, createJSONStorage } from "zustand/middleware";
+import { devtools } from "zustand/middleware";
 
 import Level from "./pages/car/Level";
 import OnScreenControls from "./pages/car/components/OnScreenControls/OnScreenControls";
 
 interface AppState {
-    debug: true | false;
+    debug: boolean;
     altDebug: () => void;
     paused: boolean;
     altPaused: () => void;
@@ -29,27 +29,19 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>()(
-    devtools(
-        persist(
-            (set) => ({
-                debug: true,
-                altDebug: () => set((state) => ({ debug: !state.debug })),
-                paused: false,
-                altPaused: () => set((state) => ({ paused: !state.paused })),
-                cameraEnabled: true,
-                setCameraEnabled: (f) => set({ cameraEnabled: f }),
-                perf: true,
-                altPerf: () => set((state) => ({ perf: !state.perf })),
-                physicsKey: 0,
-                resetPhysics: () =>
-                    set((state) => ({ physicsKey: state.physicsKey + 1 })),
-            }),
-            {
-                name: "robosim-storage", // unique name
-                storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
-            }
-        )
-    )
+    devtools((set) => ({
+        debug: true,
+        altDebug: () => set((state) => ({ debug: !state.debug })),
+        paused: false,
+        altPaused: () => set((state) => ({ paused: !state.paused })),
+        cameraEnabled: true,
+        setCameraEnabled: (f) => set({ cameraEnabled: f }),
+        perf: true,
+        altPerf: () => set((state) => ({ perf: !state.perf })),
+        physicsKey: 0,
+        resetPhysics: () =>
+            set((state) => ({ physicsKey: state.physicsKey + 1 })),
+    }))
 );
 
 const ToggleButton = ({
@@ -103,6 +95,9 @@ export const App = () => {
         altPerf,
         resetPhysics,
     } = useAppStore();
+    // useEffect(() => {
+    //     setTimeout(() => altPaused(), 1000);
+    // }, []);
     return (
         <div
             style={{
