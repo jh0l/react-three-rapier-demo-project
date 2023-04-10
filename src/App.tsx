@@ -8,7 +8,7 @@ import {
 import { Canvas } from "@react-three/fiber";
 import { Debug, Physics, RigidBody } from "@react-three/rapier";
 import { Perf } from "r3f-perf";
-import { Suspense, StrictMode, useEffect } from "react";
+import { Suspense, StrictMode } from "react";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
