@@ -1,4 +1,4 @@
-import { Image, Box, Cylinder, useGLTF } from "@react-three/drei";
+import { Image, Box, Cylinder } from "@react-three/drei";
 import { MAP_ASP, MAP_SCALE } from "./utils/useCanvasMap";
 import { CarEntity } from "./CarEntity";
 import {
@@ -18,7 +18,6 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 export default function Level() {
-    const { nodes, materials } = useGLTF("./models/Truckma.gltf");
     return (
         <>
             {/* approaching fuelstation again */}
@@ -27,10 +26,6 @@ export default function Level() {
             {/* <CarEntity position={[-20, -3, 10]} /> */}
             <Map map_url="map.png" />
             <FuelStation />
-            <mesh
-                geometry={nodes.Truckma}
-                material={materials["Material.001"]}
-            />
         </>
     );
 }
