@@ -67,11 +67,11 @@ function FuelStation() {
                     material={YELLOW_STD}
                 />
                 {/* RESTBOX */}
-                <Box scale={[0.5, 0.5, 1.12]} position={[8.24, -1.8, -1.46]}>
+                <Box scale={[0.5, 0.5, 1.12]} position={[8.24, -1.5, -1.46]}>
                     <meshStandardMaterial color="orange" />
                 </Box>
                 {/* TOPBOX (limits PUSHY BOY) */}
-                <Box scale={[0.5, 0.5, 1.12]} position={[8.24, 0.7, -1.46]}>
+                <Box scale={[0.5, 0.5, 1.12]} position={[8.24, 0.5, -1.46]}>
                     <meshStandardMaterial color="orange" />
                 </Box>
             </RigidBody>
