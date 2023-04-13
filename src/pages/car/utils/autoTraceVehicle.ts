@@ -28,7 +28,6 @@ export default class AutoTraceVehicle {
     state: State;
     cmds = new CommandParam();
     constructor(can: CanvasRes) {
-        console.log("AutoTraceVehicle constructor");
         this.can = can;
         this.state = {
             record: new Array(2000),

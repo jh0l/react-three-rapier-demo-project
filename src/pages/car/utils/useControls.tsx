@@ -21,7 +21,6 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
         () => new AutoTraceVehicle(canvasRef.current!)
     );
     const { paused } = useAppStore();
-    console.log(paused);
 
     useKeyboard(ref, stateArr);
     useFrame(() => {

@@ -365,7 +365,6 @@ interface ReadoutProps {
 }
 function Readout(props: ReadoutProps) {
     const ctx = useAppStore();
-    console.log(ctx);
     if (ctx.debug) {
         return <Readout_ {...props} />;
     } else {
