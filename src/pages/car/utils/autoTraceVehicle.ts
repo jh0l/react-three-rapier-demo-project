@@ -110,7 +110,7 @@ export default class AutoTraceVehicle {
     // runs the command
     // returns true if there are more commands to run
     // returns false if there are no more commands to run
-    run() {
+    run(delta: number) {
         const { cmds } = this.state;
         if (cmds.idx < 0 && cmds.queue.length) {
             // get first command ready
@@ -128,7 +128,7 @@ export default class AutoTraceVehicle {
                 cmds.assignNext = false;
                 this.assignNextCommandBar();
             }
-            this.state.tick += 1;
+            this.state.tick += delta * 60;
         } else {
             // reset
             this.reset();
@@ -360,6 +360,7 @@ const probe: CommandMakerMaker<number> = (speed) =>
         };
     };
 
+const PUSHY = 20
 const FUELSTATION_TEST: CommandBarMaker[] = [
     [go, timer(20)],
     [trace(0.8), intersection("R")],
@@ -368,12 +369,16 @@ const FUELSTATION_TEST: CommandBarMaker[] = [
     [drive([0]), timer(40)],
     // [drive([-1]), timer(20)],
     // [drive([-1, 0.6]), intersection("I")],
-    [drive([-0.5, -1]), timer(88)],
-    [drive([0, 0.5]), timer(38)],
-    [probe(1), timer(60)],
-    [probe(-1), timer(60)],
-    [probe(1), timer(60)],
-    [probe(-1), timer(60)],
+    [drive([-0.5, -0.75]), timer(150)],
+    [drive([0, 0.5]), timer(56)],
+    [probe(1), timer(PUSHY)],
+    [probe(-1), timer(PUSHY)],
+    [probe(1), timer(PUSHY)],
+    [probe(-1), timer(PUSHY)],
+    [probe(1), timer(PUSHY)],
+    [probe(-1), timer(PUSHY)],
+    [probe(1), timer(PUSHY)],
+    [probe(-1), timer(PUSHY)],
     [stop, done],
 ];
 

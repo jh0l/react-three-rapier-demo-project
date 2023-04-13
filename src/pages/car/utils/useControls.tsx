@@ -23,10 +23,10 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
     const { paused } = useAppStore();
 
     useKeyboard(ref, stateArr);
-    useFrame(() => {
+    useFrame((_, delta) => {
         const { auto } = state;
         if (!paused && auto && canvasRef.current) {
-            if (!ref.current.run()) setState({ auto: false });
+            if (!ref.current.run(delta)) setState({ auto: false });
         }
         if (ref.current.state.sample) {
             console.log(canvasRef.current?.luminance);
