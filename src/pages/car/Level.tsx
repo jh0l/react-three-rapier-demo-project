@@ -12,10 +12,11 @@ import {
     RigidBody,
     TrimeshCollider,
 } from "@react-three/rapier";
-import { RefObject, forwardRef, useRef } from "react";
+import { RefObject, forwardRef, useLayoutEffect, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { mapLinear } from "three/src/math/MathUtils";
 
 export default function Level() {
     return (
@@ -105,18 +106,69 @@ const FuelUnit = ({ pos }: { pos: Pos }) => (
     </RigidBody>
 );
 
+const FS_PUSHER_REF = {
+    current: {
+        target: {
+            start: -1,
+        },
+        source: {
+            start: -1,
+        },
+    },
+};
+
+const PushyBoy = forwardRef<RapierRigidBody>((_, ref) => {
+    return (
+        <RigidBody
+            enabledTranslations={[false, true, false]}
+            lockRotations={true}
+            ref={ref}
+        >
+            <Box
+                scale={[0.5, 0.5, 4.1]}
+                position={[8.24, -0.6, -1.46]}
+                material={GRAY_STD}
+            ></Box>
+        </RigidBody>
+    );
+});
+
 const HOLDER_RAD = 0.65;
 const UnitStack = ({ pushyRef }: { pushyRef: RefObject<RapierRigidBody> }) => {
     const { stored, units } = useFuelStationStore();
     const pusherRef = useRef<RapierRigidBody>(null);
     useFrame(() => {
+        if (FS_PUSHER_REF.current.target.start === -1) return;
         if (pusherRef.current && pushyRef && pushyRef.current) {
-            // const vec = pushyRef.current.translation();
             const trans = pusherRef.current.translation();
-            trans.z += 0.01;
+            const sourceZ = pushyRef.current.translation().y;
+            const sourceStart = FS_PUSHER_REF.current.source.start;
+            const sourceEnd = sourceStart + 30;
+            const targetStart = FS_PUSHER_REF.current.target.start;
+            const targetEnd = targetStart + 30;
+            const zTrans = mapLinear(
+                sourceZ,
+                sourceStart,
+                sourceEnd,
+                targetStart,
+                targetEnd
+            );
+            trans.z = zTrans;
             pusherRef.current.setTranslation(trans, false);
         }
     });
+    useLayoutEffect(() => {
+        if (
+            FS_PUSHER_REF.current.target.start === -1 &&
+            pusherRef.current &&
+            pushyRef.current
+        ) {
+            FS_PUSHER_REF.current.target.start =
+                pusherRef.current.translation().z;
+            FS_PUSHER_REF.current.source.start =
+                pushyRef.current?.translation().y;
+        }
+    }, []);
     return (
         <>
             <group position={[0, 3, 2]}>
@@ -180,55 +232,53 @@ const WHEEL_ROT: [number, number, number] = [0, 0, Math.PI / 2];
 const Car = () => {
     const torus = useRef(new TorusGeometry(1.2, 0.3, 4, 4));
     return (
-        <group>
-            <RigidBody colliders={false} position={[-0.72, 1, 5.9]} scale={1.2}>
-                <CuboidCollider
-                    args={[2, 2, 3]}
-                    scale={0.5}
-                    position={[0, 0, -0.81]}
+        <RigidBody colliders={false} position={[-0.72, 1, 5.9]} scale={1.2}>
+            <CuboidCollider
+                args={[2, 2, 3]}
+                scale={0.5}
+                position={[0, 0, -0.81]}
+            />
+            <Box
+                scale={[2, 2, 3]}
+                position={[0, 0, -0.81]}
+                material={YELLOW_STD}
+            />
+            <TrimeshCollider
+                args={[
+                    // @ts-ignore
+                    torus.current.attributes.position.array,
+                    // @ts-ignore
+                    torus.current.index.array,
+                ]}
+                position={[0, 0, 1.56]}
+                rotation={[-Math.PI / 3.2, 0, Math.PI / 4]}
+            />
+            <mesh
+                geometry={torus.current}
+                material={YELLOW_STD}
+                position={[0, 0, 1.56]}
+                rotation={[-Math.PI / 3.2, 0, Math.PI / 4]}
+            />
+            {WHEEL_POS.map((pos, i) => (
+                <Cylinder
+                    args={WHEEL_ARGS}
+                    rotation={WHEEL_ROT}
+                    position={pos}
+                    material={GRAY_STD}
+                    key={i + 1}
                 />
-                <Box
-                    scale={[2, 2, 3]}
-                    position={[0, 0, -0.81]}
-                    material={YELLOW_STD}
-                />
-                <TrimeshCollider
-                    args={[
-                        // @ts-ignore
-                        torus.current.attributes.position.array,
-                        // @ts-ignore
-                        torus.current.index.array,
-                    ]}
-                    position={[0, 0, 1.56]}
-                    rotation={[-Math.PI / 3.2, 0, Math.PI / 4]}
-                />
-                <mesh
-                    geometry={torus.current}
-                    material={YELLOW_STD}
-                    position={[0, 0, 1.56]}
-                    rotation={[-Math.PI / 3.2, 0, Math.PI / 4]}
-                />
-                {WHEEL_POS.map((pos, i) => (
-                    <Cylinder
-                        args={WHEEL_ARGS}
-                        rotation={WHEEL_ROT}
-                        position={pos}
-                        material={GRAY_STD}
-                        key={i + 1}
-                    />
-                ))}
-                <CuboidCollider
-                    args={[0.45, 0.9, 3.55]}
-                    scale={0.5}
-                    position={[1.25, -0.9, -0.07]}
-                />
-                <CuboidCollider
-                    args={[0.45, 0.9, 3.55]}
-                    scale={0.5}
-                    position={[-1.25, -0.9, -0.07]}
-                />
-            </RigidBody>
-        </group>
+            ))}
+            <CuboidCollider
+                args={[0.45, 0.9, 3.55]}
+                scale={0.5}
+                position={[1.25, -0.9, -0.07]}
+            />
+            <CuboidCollider
+                args={[0.45, 0.9, 3.55]}
+                scale={0.5}
+                position={[-1.25, -0.9, -0.07]}
+            />
+        </RigidBody>
     );
 };
 
@@ -251,23 +301,6 @@ export const useFuelStationStore = create<FuelStationState>()(
         setStored: (v: number) => set({ stored: v }),
     }))
 );
-
-const PushyBoy = forwardRef<RapierRigidBody>((_, ref) => {
-    useFrame(() => {});
-    return (
-        <RigidBody
-            enabledTranslations={[false, true, false]}
-            lockRotations={true}
-            ref={ref}
-        >
-            <Box
-                scale={[0.5, 0.5, 4.1]}
-                position={[8.24, -0.6, -1.46]}
-                material={GRAY_STD}
-            ></Box>
-        </RigidBody>
-    );
-});
 
 const Map = ({ map_url }: { map_url: string }) => {
     return (
