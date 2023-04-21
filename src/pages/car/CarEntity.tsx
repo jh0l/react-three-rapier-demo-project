@@ -107,23 +107,24 @@ export const WHEEL_COL_GROUP = 2;
 
 const WHEEL_VEL = 14;
 const WHEEL_FAC = 90;
+const STUPID_VEC = new THREE.Vector3();
 
 export function CarEntity({
     position = [-40, -3, 15],
     rotation = [0, -Math.PI / 1.5, 0],
 }: {
-    position?: [number, number, number];
-    rotation?: [number, number, number];
+    position?: Vector3Array;
+    rotation?: Vector3Array;
 }) {
     console.log("Car Entity Rendered");
     const bodyRef = useRef<RapierRigidBody>(null);
     const pokeyRef = useRef<RapierRigidBody>(null);
-    const pokeyPosition = [-4.25, -1, 0] as [number, number, number];
-    const wheelPositions: [number, number, number][] = [
+    const pokeyPosition = [-4.25, -1, 0] as Vector3Array;
+    const wheelPositions: Vector3Array[] = [
         [3, -0.3, 3.3],
         [3, -0.3, -3.3],
     ];
-    const sensorPositions: [number, number, number][] = [
+    const sensorPositions: Vector3Array[] = [
         [-2.6, 2, 0],
         [1, 0, 1],
         [2, 0, 0],
@@ -140,7 +141,6 @@ export function CarEntity({
     const wheelRefs = useJitRef(() =>
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
-    const STUPID_VEC = new THREE.Vector3();
     const [canvasRef] = useCanvasMap(floatyBoxesRef);
     const [ctrlRef, [{ auto }, setCtrlState]] = useControls(canvasRef);
     const handleStart = () => setCtrlState({ auto: true });

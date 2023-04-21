@@ -6,9 +6,15 @@ import {
     OrbitControls,
 } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { Debug, Physics, RigidBody } from "@react-three/rapier";
+import { Debug, Physics, RigidBody, Vector3Array } from "@react-three/rapier";
 import { Perf } from "r3f-perf";
-import { Suspense, StrictMode } from "react";
+import {
+    Suspense,
+    StrictMode,
+    useEffect,
+    useLayoutEffect,
+    useRef,
+} from "react";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
@@ -80,10 +86,33 @@ const Floor = () => {
         </RigidBody>
     );
 };
-const CAM_LOC: [number, number, number] = [20, 70, 40];
-const TARG_LOC: [number, number, number] = [-20, 0, -5];
+/*
+{
+    33.99355661923482,
+    55.6466792737373,
+    26.384645127537574
+}
+    -1.0842498521952741,
+    0.8474920950984738,
+    0.9562984074406269,
+*/
+// car location
+const CAM_LOC: Vector3Array = [
+    33.99355661923482, 55.6466792737373, 26.384645127537574,
+];
+const TARG_LOC: Vector3Array = [-43.24, -5, -11.94];
+const CAM_ZOOM = 50;
+/* default camera location /
+const CAM_LOC: Vector3Array = [20, 70, 40];
+const TARG_LOC: Vector3Array = [-20, 0, -5];
 const CAM_ZOOM = 20;
+*/
 export const App = () => {
+    const camRef = useRef<typeof OrthographicCamera>();
+    useLayoutEffect(() => {
+        setTimeout(() => console.log(camRef), 1000);
+    }, []);
+
     const {
         cameraEnabled,
         debug,
@@ -95,9 +124,9 @@ export const App = () => {
         altPerf,
         resetPhysics,
     } = useAppStore();
-    // useEffect(() => {
-    //     setTimeout(() => altPaused(), 1000);
-    // }, []);
+    useEffect(() => {
+        setTimeout(() => resetPhysics(), 1000);
+    }, []);
     return (
         <div
             style={{
@@ -111,6 +140,7 @@ export const App = () => {
                 <Canvas shadows>
                     <OrbitControls enabled={cameraEnabled} target={TARG_LOC} />
                     <OrthographicCamera
+                        ref={camRef}
                         position={CAM_LOC}
                         zoom={CAM_ZOOM}
                         makeDefault
