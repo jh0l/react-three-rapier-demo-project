@@ -360,7 +360,7 @@ const probe: CommandMakerMaker<number> = (speed) =>
         };
     };
 
-const PUSHY = 20
+const PUSHY = 40;
 const FUELSTATION_TEST: CommandBarMaker[] = [
     [go, timer(20)],
     [trace(0.8), intersection("R")],
@@ -369,14 +369,33 @@ const FUELSTATION_TEST: CommandBarMaker[] = [
     [drive([0]), timer(40)],
     // [drive([-1]), timer(20)],
     // [drive([-1, 0.6]), intersection("I")],
-    [drive([-0.5, -0.75]), timer(150)],
+    [drive([-0.5, -0.75]), timer(157)],
     [drive([0, 0.5]), timer(56)],
+
     [probe(1), timer(PUSHY)],
     [probe(-1), timer(PUSHY)],
+    [stop, timer(10)],
+
     [probe(1), timer(PUSHY)],
     [probe(-1), timer(PUSHY)],
+    [stop, timer(10)],
+
     [probe(1), timer(PUSHY)],
     [probe(-1), timer(PUSHY)],
+    [stop, timer(10)],
+
+    [probe(1), timer(PUSHY)],
+    [probe(-1), timer(PUSHY)],
+    [stop, timer(10)],
+
+    [probe(1), timer(PUSHY)],
+    [probe(-1), timer(PUSHY)],
+    [stop, timer(10)],
+
+    [probe(1), timer(PUSHY)],
+    [probe(-1), timer(PUSHY)],
+    [stop, timer(10)],
+
     [probe(1), timer(PUSHY)],
     [probe(-1), timer(PUSHY)],
     [stop, done],
