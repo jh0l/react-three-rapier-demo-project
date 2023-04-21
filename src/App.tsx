@@ -20,6 +20,7 @@ import { devtools } from "zustand/middleware";
 
 import Level from "./pages/car/Level";
 import OnScreenControls from "./pages/car/components/OnScreenControls/OnScreenControls";
+import BlocklyEditor from "./BlocklyEditor/BlocklyEditor";
 
 interface AppState {
     debug: boolean;
@@ -202,6 +203,7 @@ export const App = () => {
                 <ToggleButton label="Home" value={false} onClick={() => {}} />
             </div>
             <OnScreenControls />
+            <BlocklyEditor />
         </div>
     );
 };
