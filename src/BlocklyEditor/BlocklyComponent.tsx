@@ -39,7 +39,10 @@ export default function BlocklyComponent(props: Props) {
     return (
         <>
             <button onClick={generateCode}>Generate Code</button>
-            <div ref={blocklyRef} className="h-1/2 w-full absolute top-0" />
+            <div
+                ref={blocklyRef}
+                className="h-[46%] w-full absolute bottom-10"
+            />
             <div ref={toolboxRef} style={{ display: "none" }}>
                 {props.children}
             </div>
@@ -64,4 +67,58 @@ const Value = BlocklyTag("value");
 const Field = BlocklyTag("field");
 const Shadow = BlocklyTag("shadow");
 
-export { Block, Category, Value, Field, Shadow };
+const autonomarsCategories = {
+    kind: "categoryToolbox",
+    contents: [
+        {
+            kind: "category",
+            name: "Lists",
+            categorystyle: "list_category",
+            contents: [
+                {
+                    type: "lists_create_with",
+                    kind: "block",
+                },
+                {
+                    type: "lists_create_with",
+                    kind: "block",
+                },
+                {
+                    type: "lists_length",
+                    kind: "block",
+                },
+                {
+                    type: "lists_isEmpty",
+                    kind: "block",
+                },
+                {
+                    type: "lists_sort",
+                    kind: "block",
+
+                    fields: {
+                        TYPE: "NUMERIC",
+                        DIRECTION: "1",
+                    },
+                },
+                {
+                    type: "lists_reverse",
+                    kind: "block",
+                },
+            ],
+        },
+        {
+            kind: "category",
+            name: "Functions",
+            categorystyle: "procedure_category",
+            custom: "PROCEDURE",
+        },
+        {
+            kind: "category",
+            name: "Variables",
+            categorystyle: "variable_category",
+            custom: "VARIABLE",
+        },
+    ],
+};
+
+export { Block, Category, Value, Field, Shadow, autonomarsCategories };

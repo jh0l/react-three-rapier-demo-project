@@ -19,7 +19,7 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 import Level from "./pages/car/Level";
-import OnScreenControls from "./pages/car/components/OnScreenControls/OnScreenControls";
+// import OnScreenControls from "./pages/car/components/OnScreenControls/OnScreenControls";
 import BlocklyEditor from "./BlocklyEditor/BlocklyEditor";
 
 interface AppState {
@@ -67,7 +67,7 @@ const ToggleButton = ({
             color: value ? "white" : "red",
             borderRadius: 4,
         }}
-        className="select-none"
+        className="select-none px-2"
         onClick={onClick}
     >
         {label}
@@ -101,8 +101,8 @@ const Floor = () => {
 const CAM_LOC: Vector3Array = [
     33.99355661923482, 55.6466792737373, 26.384645127537574,
 ];
-const TARG_LOC: Vector3Array = [-43.24, -5, -11.94];
-const CAM_ZOOM = 50;
+const TARG_LOC: Vector3Array = [-43.24, -5, -0.94];
+const CAM_ZOOM = 13;
 /* default camera location /
 const CAM_LOC: Vector3Array = [20, 70, 40];
 const TARG_LOC: Vector3Array = [-20, 0, -5];
@@ -137,51 +137,58 @@ export const App = () => {
                 fontFamily: "sans-serif",
             }}
         >
-            <Suspense fallback={<Loading />}>
-                <Canvas shadows>
-                    <OrbitControls enabled={cameraEnabled} target={TARG_LOC} />
-                    <OrthographicCamera
-                        ref={camRef}
-                        position={CAM_LOC}
-                        zoom={CAM_ZOOM}
-                        makeDefault
-                    />
-                    <StrictMode>
-                        <Physics
-                            paused={paused}
-                            key={physicsKey}
-                            gravity={[0, -200, 0]}
-                        >
-                            <directionalLight
-                                castShadow
-                                position={[10, 10, 10]}
-                                shadow-camera-bottom={-40}
-                                shadow-camera-top={40}
-                                shadow-camera-left={-40}
-                                shadow-camera-right={40}
-                                shadow-mapSize-width={1024}
-                                shadow-bias={-0.0001}
-                            />
-                            <Environment
-                                // preset="city"
-                                files="./potsdamer_platz_1k.hdr"
-                            />
+            <div className="w-full h-1/2">
+                <Suspense fallback={<Loading />}>
+                    <Canvas shadows>
+                        <OrbitControls
+                            enabled={cameraEnabled}
+                            target={TARG_LOC}
+                        />
+                        <OrthographicCamera
+                            ref={camRef}
+                            position={CAM_LOC}
+                            zoom={CAM_ZOOM}
+                            makeDefault
+                        />
+                        <StrictMode>
+                            <Physics
+                                paused={paused}
+                                key={physicsKey}
+                                gravity={[0, -200, 0]}
+                            >
+                                <directionalLight
+                                    castShadow
+                                    position={[10, 10, 10]}
+                                    shadow-camera-bottom={-40}
+                                    shadow-camera-top={40}
+                                    shadow-camera-left={-40}
+                                    shadow-camera-right={40}
+                                    shadow-mapSize-width={1024}
+                                    shadow-bias={-0.0001}
+                                />
+                                <Environment
+                                    // preset="city"
+                                    files="./potsdamer_platz_1k.hdr"
+                                />
 
-                            <Level />
+                                <Level />
 
-                            <Floor />
+                                <Floor />
 
-                            {debug && <Debug />}
-                            {perf && <Perf />}
-                        </Physics>
-                    </StrictMode>
-                </Canvas>
-            </Suspense>
+                                {debug && <Debug />}
+                                {perf && <Perf />}
+                            </Physics>
+                        </StrictMode>
+                    </Canvas>
+                </Suspense>
+            </div>
+            <BlocklyEditor />
             <div
                 style={{
                     position: "absolute",
-                    bottom: 24,
-                    left: 24,
+                    bottom: 6.5,
+                    right: 10,
+                    zIndex: 100,
                     display: "flex",
                     flexWrap: "wrap",
                     gap: 12,
@@ -200,10 +207,8 @@ export const App = () => {
                     value={false}
                     onClick={resetPhysics}
                 />
-                <ToggleButton label="Home" value={false} onClick={() => {}} />
             </div>
-            <OnScreenControls />
-            <BlocklyEditor />
+            {/* <OnScreenControls /> */}
         </div>
     );
 };

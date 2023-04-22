@@ -3,6 +3,7 @@ import BlocklyComponent, {
     Field,
     Shadow,
     Value,
+    autonomarsCategories,
 } from "./BlocklyComponent";
 
 export default function BlocklyEditor() {
@@ -12,33 +13,31 @@ export default function BlocklyEditor() {
             trashcan={true}
             renderer="zelos"
             theme="zelos"
-            toolbox={{
-                kind: "categoryToolbox",
-                contents: [
-                    {
-                        kind: "category",
-                        name: "Functions",
-                        categorystyle: "procedure_category",
-                        custom: "PROCEDURE",
-                    },
-                    {
-                        kind: "category",
-                        name: "Variables",
-                        categorystyle: "variable_category",
-                        custom: "VARIABLE",
-                    },
-                ],
-            }}
+            toolbox={autonomarsCategories}
             collapse={true}
             media="media/"
             move={{
                 scrollbars: true,
                 drag: true,
-                wheel: true,
+                wheel: false,
             }}
+            zoom={{
+                controls: true,
+                wheel: true,
+                startScale: 0.8,
+            }}
+            grid={{
+                spacing: 40,
+                length: 3,
+                colour: "#888888",
+                snap: true,
+            }}
+            comments={true}
+            disable={true}
+            sounds={true}
             initialXml={`
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="controls_ifelse" x="0" y="0"></block>
+<block type="controls_ifelse" x="140" y="60"></block>
 </xml>
 `}
         >

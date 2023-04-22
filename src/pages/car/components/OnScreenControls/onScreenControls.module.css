@@ -7,16 +7,14 @@
 
 .dragArea {
     @apply w-32 h-32 sm:w-56 sm:h-56;
-    opacity: 0.35;
-    background: white;
     position: absolute;
     border-radius: 30px;
 }
 
 .dragAreaParent {
-    @apply absolute bottom-32 right-20 sm:bottom-36 sm:right-36 flex items-center justify-center;
+    @apply absolute bottom-52 right-52 sm:bottom-44 sm:right-48 flex items-center justify-center;
 }
 
 .disableBtn {
-    @apply absolute bg-white right-36 -bottom-28 p-3 rounded-xl shadow-xl;
+    @apply absolute bg-white bottom-32 right-20 p-3 rounded-xl shadow-xl;
 }
