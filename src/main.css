@@ -22,3 +22,8 @@
     animation-timing-function: ease, step-start, cubic-bezier(0.1, 0.7, 1, 0.1);
     transform: scaleX(15) scaleY(2) translateY(-7px);
 }
+
+/* fix tailwindcss ruining blockly's fun */
+svg[display="none"] {
+    display: none;
+}
