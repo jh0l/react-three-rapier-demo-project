@@ -14,6 +14,7 @@ type Props = Blockly.BlocklyOptions & {
     initialXml: string;
 };
 
+// @ts-ignore
 class ContinuousToolboxFix extends ContinuousToolbox {
     init() {}
 }
