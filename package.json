@@ -10,6 +10,7 @@
         "tsc": "tsc"
     },
     "dependencies": {
+        "@blockly/continuous-toolbox": "^3.0.12",
         "@react-three/drei": "^9.45.0",
         "@react-three/fiber": "^8.9.1",
         "@react-three/rapier": "^0.14.0",

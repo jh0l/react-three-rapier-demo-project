@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from "react";
 
 import Blockly, { WorkspaceSvg } from "blockly/core";
+import { ContinuousToolbox } from "@blockly/continuous-toolbox";
+
 import { javascriptGenerator } from "blockly/javascript";
 import locale from "blockly/msg/en";
 import "blockly/blocks";
@@ -11,6 +13,10 @@ type Props = Blockly.BlocklyOptions & {
     children: React.ReactNode;
     initialXml: string;
 };
+
+class ContinuousToolboxFix extends ContinuousToolbox {
+    init() {}
+}
 
 export default function BlocklyComponent(props: Props) {
     const blocklyRef = useRef<HTMLDivElement>(null);
@@ -23,7 +29,12 @@ export default function BlocklyComponent(props: Props) {
 
     useEffect(() => {
         const { initialXml, children, ...rest } = props;
-        if (!blocklyRef.current || !toolboxRef.current) return;
+        if (
+            !blocklyRef.current ||
+            !toolboxRef.current ||
+            workspcRef.current != undefined
+        )
+            return;
         workspcRef.current = Blockly.inject(blocklyRef.current, {
             toolbox: toolboxRef.current,
             ...rest,
@@ -55,6 +66,8 @@ type BlocklyTagProps = {
     type?: string;
     name?: string;
     is?: string;
+    categorystyle?: string;
+    custom?: string;
 };
 const BlocklyTag = (tag: string) => (props: BlocklyTagProps) => {
     const { children, ...rest } = props;
@@ -67,58 +80,32 @@ const Value = BlocklyTag("value");
 const Field = BlocklyTag("field");
 const Shadow = BlocklyTag("shadow");
 
-const autonomarsCategories = {
-    kind: "categoryToolbox",
-    contents: [
-        {
-            kind: "category",
-            name: "Lists",
-            categorystyle: "list_category",
-            contents: [
-                {
-                    type: "lists_create_with",
-                    kind: "block",
-                },
-                {
-                    type: "lists_create_with",
-                    kind: "block",
-                },
-                {
-                    type: "lists_length",
-                    kind: "block",
-                },
-                {
-                    type: "lists_isEmpty",
-                    kind: "block",
-                },
-                {
-                    type: "lists_sort",
-                    kind: "block",
+function BlocklyCategories() {
+    return (
+        <>
+            <Category name="Control" categorystyle="Control_category" />
+            <Category name="Lists" categorystyle="list_category">
+                <Block type="lists_create_with" />
+                <Block type="lists_length" />
+                <Block type="lists_isEmpty" />
+                <Block type="lists_sort">
+                    <Field name="TYPE">NUMERIC</Field>
+                    <Field name="DIRECTION">1</Field>
+                </Block>
+                <Block type="lists_reverse" />
+            </Category>
+            <Category
+                name="Functions"
+                categorystyle="procedure_category"
+                custom="PROCEDURE"
+            />
+            <Category
+                name="Variables"
+                categorystyle="variable_category"
+                custom="VARIABLE"
+            />
+        </>
+    );
+}
 
-                    fields: {
-                        TYPE: "NUMERIC",
-                        DIRECTION: "1",
-                    },
-                },
-                {
-                    type: "lists_reverse",
-                    kind: "block",
-                },
-            ],
-        },
-        {
-            kind: "category",
-            name: "Functions",
-            categorystyle: "procedure_category",
-            custom: "PROCEDURE",
-        },
-        {
-            kind: "category",
-            name: "Variables",
-            categorystyle: "variable_category",
-            custom: "VARIABLE",
-        },
-    ],
-};
-
-export { Block, Category, Value, Field, Shadow, autonomarsCategories };
+export { Block, Category, Value, Field, Shadow, BlocklyCategories };

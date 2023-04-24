@@ -1,10 +1,4 @@
-import BlocklyComponent, {
-    Block,
-    Field,
-    Shadow,
-    Value,
-    autonomarsCategories,
-} from "./BlocklyComponent";
+import BlocklyComponent, { BlocklyCategories } from "./BlocklyComponent";
 
 export default function BlocklyEditor() {
     return (
@@ -13,7 +7,6 @@ export default function BlocklyEditor() {
             trashcan={true}
             renderer="zelos"
             theme="zelos"
-            toolbox={autonomarsCategories}
             collapse={true}
             media="media/"
             move={{
@@ -41,14 +34,7 @@ export default function BlocklyEditor() {
 </xml>
 `}
         >
-            <Block type="controls_ifelse" />
-            <Block type="controls_repeat_ext">
-                <Value name="TIMES">
-                    <Shadow type="math_number">
-                        <Field name="NUM">10</Field>
-                    </Shadow>
-                </Value>
-            </Block>
+            <BlocklyCategories />
         </BlocklyComponent>
     );
 }

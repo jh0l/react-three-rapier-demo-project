@@ -1,6 +1,9 @@
 lockfileVersion: '6.0'
 
 dependencies:
+  '@blockly/continuous-toolbox':
+    specifier: ^3.0.12
+    version: 3.0.12(blockly@9.3.2)
   '@react-three/drei':
     specifier: ^9.45.0
     version: 9.45.0(@react-three/fiber@8.9.1)(react-dom@18.2.0)(react@18.2.0)(three@0.146.0)
@@ -356,6 +359,15 @@ packages:
       '@babel/helper-validator-identifier': 7.19.1
       to-fast-properties: 2.0.0
     dev: true
+
+  /@blockly/continuous-toolbox@3.0.12(blockly@9.3.2):
+    resolution: {integrity: sha512-nllubgn4yyyfdAEi6lUleNzREmI4+nNlt65lSXWi6jgTVPUN+zVml7Loo7CdI0kifFcn+e6v01PLXBNacJhayA==}
+    engines: {node: '>=8.17.0'}
+    peerDependencies:
+      blockly: ^9.0.0
+    dependencies:
+      blockly: 9.3.2
+    dev: false
 
   /@chevrotain/cst-dts-gen@10.5.0:
     resolution: {integrity: sha512-lhmC/FyqQ2o7pGK4Om+hzuDrm9rhFYIJ/AXoQBeongmn870Xeb0L6oGEiuR8nohFNL5sMaQEJWCxr1oIVIVXrw==}
