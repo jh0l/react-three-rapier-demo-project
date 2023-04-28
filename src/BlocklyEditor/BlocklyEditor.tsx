@@ -3,9 +3,10 @@ import BlocklyComponent, { BlocklyCategories } from "./BlocklyComponent";
 export default function BlocklyEditor() {
     return (
         <BlocklyComponent
+            className="h-1/2 w-full absolute bottom-0"
             readOnly={false}
             trashcan={true}
-            renderer="zelos"
+            renderer="zelos_custom"
             theme="zelos"
             collapse={true}
             media="media/"

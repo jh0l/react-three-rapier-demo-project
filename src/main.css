@@ -27,3 +27,8 @@
 svg[display="none"] {
     display: none;
 }
+
+.togglebtn_group {
+    @apply absolute right-1 z-50 flex flex-wrap gap-3 max-w-xl;
+    bottom: 50.5%;
+}

@@ -183,18 +183,7 @@ export const App = () => {
                 </Suspense>
             </div>
             <BlocklyEditor />
-            <div
-                style={{
-                    position: "absolute",
-                    bottom: 6.5,
-                    right: 10,
-                    zIndex: 100,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 12,
-                    maxWidth: 600,
-                }}
-            >
+            <div className="togglebtn_group">
                 <ToggleButton label="Debug" value={debug} onClick={altDebug} />
                 <ToggleButton
                     label="Paused"

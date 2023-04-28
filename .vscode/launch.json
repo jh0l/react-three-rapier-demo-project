@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://127.0.0.1:5173/",
+            "url": "http://localhost:5173/",
             "webRoot": "${workspaceFolder}",
             "runtimeExecutable": "/home/jack/.local/share/flatpak/exports/bin/org.chromium.Chromium"
         },
@@ -16,7 +16,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "macOS Launch Chrome against localhost",
-            "url": "http://127.0.0.1:5173/",
+            "url": "http://localhost:5173/",
             "webRoot": "${workspaceFolder}",
             "runtimeExecutable": "stable"
         }

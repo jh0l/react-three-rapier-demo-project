@@ -6,12 +6,15 @@ import { ContinuousToolbox } from "@blockly/continuous-toolbox";
 import { javascriptGenerator } from "blockly/javascript";
 import locale from "blockly/msg/en";
 import "blockly/blocks";
+import "./renderer/zelos_custom";
+import "./plugins/block-plus-minus";
 
 Blockly.setLocale(locale);
 
 type Props = Blockly.BlocklyOptions & {
     children: React.ReactNode;
     initialXml: string;
+    className: string;
 };
 
 // @ts-ignore
@@ -51,10 +54,7 @@ export default function BlocklyComponent(props: Props) {
     return (
         <>
             <button onClick={generateCode}>Generate Code</button>
-            <div
-                ref={blocklyRef}
-                className="h-[46%] w-full absolute bottom-10"
-            />
+            <div ref={blocklyRef} className={props.className} />
             <div ref={toolboxRef} style={{ display: "none" }}>
                 {props.children}
             </div>
@@ -69,6 +69,8 @@ type BlocklyTagProps = {
     is?: string;
     categorystyle?: string;
     custom?: string;
+    extraState?: any;
+    items?: string;
 };
 const BlocklyTag = (tag: string) => (props: BlocklyTagProps) => {
     const { children, ...rest } = props;
@@ -80,19 +82,19 @@ const Category = BlocklyTag("category");
 const Value = BlocklyTag("value");
 const Field = BlocklyTag("field");
 const Shadow = BlocklyTag("shadow");
+const Mutation = BlocklyTag("mutation");
 
 function BlocklyCategories() {
     return (
         <>
             <Category name="Control" categorystyle="Control_category" />
             <Category name="Lists" categorystyle="list_category">
+                <Block type="lists_create_with" extraState={{ itemCount: 1 }}>
+                    <Mutation items="3" />
+                </Block>
                 <Block type="lists_create_with" />
                 <Block type="lists_length" />
                 <Block type="lists_isEmpty" />
-                <Block type="lists_sort">
-                    <Field name="TYPE">NUMERIC</Field>
-                    <Field name="DIRECTION">1</Field>
-                </Block>
                 <Block type="lists_reverse" />
             </Category>
             <Category
