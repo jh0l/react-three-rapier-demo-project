@@ -7,7 +7,7 @@ export default function BlocklyEditor() {
             readOnly={false}
             trashcan={true}
             renderer="zelos_custom"
-            theme="zelos"
+            theme="zelos_custom"
             collapse={true}
             media="media/"
             move={{
@@ -31,7 +31,9 @@ export default function BlocklyEditor() {
             sounds={true}
             initialXml={`
 <xml xmlns="http://www.w3.org/1999/xhtml">
-<block type="controls_ifelse" x="140" y="60"></block>
+    <block type="lists_create_with" x="140" y="60">
+        <mutation items="3"></mutation>
+    </block>
 </xml>
 `}
         >

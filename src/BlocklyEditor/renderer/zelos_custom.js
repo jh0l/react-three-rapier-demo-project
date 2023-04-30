@@ -1,4 +1,4 @@
-import * as Blockly from 'blockly/core';
+import * as Blockly from "blockly/core";
 
 class CustomConstantProvider extends Blockly.zelos.ConstantProvider {
     /**
@@ -30,4 +30,8 @@ class CustomRenderer extends Blockly.zelos.Renderer {
     }
 }
 
-Blockly.blockRendering.register('zelos_custom', CustomRenderer);
+Blockly.blockRendering.register("zelos_custom", CustomRenderer);
+
+Blockly.Theme.defineTheme("zelos_custom", {
+    base: Blockly.Themes.Zelos,
+});

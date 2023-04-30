@@ -89,7 +89,7 @@ function BlocklyCategories() {
         <>
             <Category name="Control" categorystyle="Control_category" />
             <Category name="Lists" categorystyle="list_category">
-                <Block type="lists_create_with" extraState={{ itemCount: 1 }}>
+                <Block type="lists_create_with">
                     <Mutation items="3" />
                 </Block>
                 <Block type="lists_create_with" />
