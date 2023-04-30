@@ -8,6 +8,7 @@ import locale from "blockly/msg/en";
 import "blockly/blocks";
 import "./renderer/zelos_custom";
 import "./plugins/block-plus-minus";
+import * as localStorage from "./plugins/localStorage";
 
 Blockly.setLocale(locale);
 
@@ -22,6 +23,7 @@ class ContinuousToolboxFix extends ContinuousToolbox {
     init() {}
 }
 
+/** inject Blockly workspace into ReactDOM */
 export default function BlocklyComponent(props: Props) {
     const blocklyRef = useRef<HTMLDivElement>(null);
     const toolboxRef = useRef<HTMLDivElement>(null);
@@ -44,12 +46,17 @@ export default function BlocklyComponent(props: Props) {
             ...rest,
         });
 
-        if (initialXml) {
-            Blockly.Xml.domToWorkspace(
-                Blockly.utils.xml.textToDom(initialXml),
-                workspcRef.current
-            );
-        }
+        localStorage.load(workspcRef.current, initialXml);
+
+        workspcRef.current.addChangeListener(() => {
+            if (workspcRef.current) {
+                localStorage.save(workspcRef.current);
+            }
+        });
+
+        return () => {
+            workspcRef.current?.dispose();
+        };
     }, []);
     return (
         <>
