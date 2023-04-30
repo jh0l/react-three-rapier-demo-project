@@ -6,10 +6,22 @@
 - [x] replace ToolboxDefinition object with JSX children prop of BlocklyEditor
 - [x] make lists and stuff fit into mobile using plus-minus plugin etc
 - [ ] add blockly integration with concurrent-modular-command-list
+  - [ ] add local storage usage to save workspace
   - [ ] add 'Start' block
+    - [ ] only code connected to start block is generated to javascript
+    - [ ] start block is always the first block in the workspace
+  - [ ] create block definitions and/or toolbox definitions for all Command and Trigger type functions with necessary number blocks in the number fields prepopulating parameters for functions that need them (e.g trace(speed) vs go())
+    - [ ] add Command, and Trigger category to toolbox with custom colorsr
+    - [ ] provide controls for automatically collapsing 'task step' function blocks (removing 'task step with: ' label when collapsed) + use tick icon for closing 'task step' blocks
+    - [ ]
+  - [ ] create block that takes in a list of strings in input field in toolbox definition and creates a dropdown menu
+          displaying those strings as options (for intersection function etc)
   - [ ] when Start button is pressed, read in the commands to CommandBarMaker queue
   - [ ] create a command list from the commands
+  - [ ] create slider block (i.e @blockly/field-slider) for turn angles and speed etc
 - [ ] move to NextJS
+- [ ] toggle between blockly and 3D Scene being arranged top/bot and lft/rgt depending on whether width > **height**
+- [ ] prevent users from removing an element from create-list plus with minus button if there is a block occupying the field about to be removed
 - [ ] add env-var.production triggered dynamic import of blockly
 - [ ] Add workspace backpack
 - [ ] add continous toolbox & stop blockly block from being deleted when it's placed in the location of the flyout before the flyout was closed
