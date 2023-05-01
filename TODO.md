@@ -6,8 +6,8 @@
 - [x] replace ToolboxDefinition object with JSX children prop of BlocklyEditor
 - [x] make lists and stuff fit into mobile using plus-minus plugin etc
 - [ ] add blockly integration with concurrent-modular-command-list
-  - [ ] add local storage usage to save workspace
-  - [ ] add 'Start' block
+  - [x] add local storage usage to save workspace
+  - [x] add 'Start' block
     - [ ] only code connected to start block is generated to javascript
     - [ ] start block is always the first block in the workspace
   - [ ] create block definitions and/or toolbox definitions for all Command and Trigger type functions with necessary number blocks in the number fields prepopulating parameters for functions that need them (e.g trace(speed) vs go())
@@ -19,6 +19,7 @@
   - [ ] when Start button is pressed, read in the commands to CommandBarMaker queue
   - [ ] create a command list from the commands
   - [ ] create slider block (i.e @blockly/field-slider) for turn angles and speed etc
+  - [ ] make cool little icons for Command and Trigger functions like scratch extensions have (make searchable pop up menu for selecting icon for function like Notion does for Page icons)
 - [ ] move to NextJS
 - [ ] toggle between blockly and 3D Scene being arranged top/bot and lft/rgt depending on whether width > **height**
 - [ ] prevent users from removing an element from create-list plus with minus button if there is a block occupying the field about to be removed
