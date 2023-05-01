@@ -12,6 +12,14 @@ export const saveString = (str: string) => {
     window.localStorage?.setItem(storageKey, str);
 };
 
+export const loadString = (workspace: Blockly.Workspace, data: string) => {
+    Blockly.Events.disable();
+    Blockly.serialization.workspaces.load(JSON.parse(data), workspace, {
+        recordUndo: false,
+    });
+    Blockly.Events.enable();
+};
+
 /** Loads saved state from local storage into the given workspace. */
 export const load = function (
     workspace: Blockly.Workspace,
@@ -29,9 +37,5 @@ export const load = function (
     }
 
     // Don't emit events during loading.
-    Blockly.Events.disable();
-    Blockly.serialization.workspaces.load(JSON.parse(data), workspace, {
-        recordUndo: false,
-    });
-    Blockly.Events.enable();
+    loadString(workspace, data);
 };

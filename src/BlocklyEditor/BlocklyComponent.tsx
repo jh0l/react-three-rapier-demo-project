@@ -41,6 +41,8 @@ export default function BlocklyComponent(props: Props) {
 
     const applyLocalStorage = () => {
         localStorage.saveString(textValue);
+        if (workspcRef.current)
+            localStorage.loadString(workspcRef.current, textValue);
     };
 
     useEffect(() => {
