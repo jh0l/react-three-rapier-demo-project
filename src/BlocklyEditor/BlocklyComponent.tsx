@@ -8,6 +8,7 @@ import locale from "blockly/msg/en";
 import "blockly/blocks";
 import "./renderer/zelos_custom";
 import "./plugins/block-plus-minus";
+import "./blocks/events";
 import * as localStorage from "./plugins/localStorage";
 
 Blockly.setLocale(locale);
@@ -29,6 +30,7 @@ export default function BlocklyComponent(props: Props) {
     const toolboxRef = useRef<HTMLDivElement>(null);
     const workspcRef = useRef<WorkspaceSvg>();
     const generateCode = () => {
+        console.log(javascriptGenerator.workspaceToCode);
         const code = javascriptGenerator.workspaceToCode(workspcRef.current);
         console.log(code);
     };
@@ -60,11 +62,16 @@ export default function BlocklyComponent(props: Props) {
     }, []);
     return (
         <>
-            <button onClick={generateCode}>Generate Code</button>
             <div ref={blocklyRef} className={props.className} />
             <div ref={toolboxRef} style={{ display: "none" }}>
                 {props.children}
             </div>
+            <button
+                onClick={generateCode}
+                className="absolute right-3 bottom-[45%] bg-white border-solid border-black border-2 rounded py-1 px-2 hover:shadow-md active:shadow-lg"
+            >
+                Generate Code
+            </button>
         </>
     );
 }
@@ -94,7 +101,9 @@ const Mutation = BlocklyTag("mutation");
 function BlocklyCategories() {
     return (
         <>
-            <Category name="Control" categorystyle="Control_category" />
+            <Category name="Events" categorystyle="events_category">
+                <Block type="events_start" />
+            </Category>
             <Category name="Lists" categorystyle="list_category">
                 <Block type="lists_create_with">
                     <Mutation items="3" />

@@ -15,7 +15,7 @@ class CustomConstantProvider extends Blockly.zelos.ConstantProvider {
 
     init() {
         super.init();
-        this.CORNER_RADIUS = 16;
+        this.CORNER_RADIUS = 8;
         this.ROUNDED = super.makeSquared();
         this.CORNER_RADIUS = 5;
     }
@@ -23,7 +23,7 @@ class CustomConstantProvider extends Blockly.zelos.ConstantProvider {
 
 class CustomRenderer extends Blockly.zelos.Renderer {
     constructor() {
-        super();
+        super("zelos_custom");
     }
     makeConstants_() {
         return new CustomConstantProvider();
@@ -33,5 +33,17 @@ class CustomRenderer extends Blockly.zelos.Renderer {
 Blockly.blockRendering.register("zelos_custom", CustomRenderer);
 
 Blockly.Theme.defineTheme("zelos_custom", {
+    name: "zelos_custom",
     base: Blockly.Themes.Zelos,
+    categoryStyles: {
+        events_category: { colour: "#CF63CF" },
+    },
+    blockStyles: {
+        event_blocks: {
+            colourPrimary: "#CF63CF",
+            colourSecondary: "#A651A6",
+            colourTertiary: "#9C439C",
+            hat: "cap",
+        },
+    },
 });

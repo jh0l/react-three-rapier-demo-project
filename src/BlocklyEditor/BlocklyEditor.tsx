@@ -18,13 +18,12 @@ export default function BlocklyEditor() {
             zoom={{
                 controls: true,
                 wheel: true,
-                startScale: 0.8,
+                startScale: 0.7,
             }}
             grid={{
                 spacing: 40,
                 length: 3,
-                colour: "#888888",
-                snap: true,
+                colour: "#666666",
             }}
             comments={true}
             disable={true}
