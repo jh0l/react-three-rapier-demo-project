@@ -26,6 +26,8 @@ class ContinuousToolboxFix extends ContinuousToolbox {
 
 /** inject Blockly workspace into ReactDOM */
 export default function BlocklyComponent(props: Props) {
+    const [textValue, setTextValue] = React.useState("");
+    const [showButtons, setShowButtons] = React.useState(false);
     const blocklyRef = useRef<HTMLDivElement>(null);
     const toolboxRef = useRef<HTMLDivElement>(null);
     const workspcRef = useRef<WorkspaceSvg>();
@@ -33,6 +35,12 @@ export default function BlocklyComponent(props: Props) {
         console.log(javascriptGenerator.workspaceToCode);
         const code = javascriptGenerator.workspaceToCode(workspcRef.current);
         console.log(code);
+        console.log(workspcRef.current, Blockly);
+    };
+    const toggleShowButtons = () => setShowButtons(!showButtons);
+
+    const applyLocalStorage = () => {
+        localStorage.saveString(textValue);
     };
 
     useEffect(() => {
@@ -66,12 +74,35 @@ export default function BlocklyComponent(props: Props) {
             <div ref={toolboxRef} style={{ display: "none" }}>
                 {props.children}
             </div>
-            <button
-                onClick={generateCode}
-                className="absolute right-3 bottom-[45%] bg-white border-solid border-black border-2 rounded py-1 px-2 hover:shadow-md active:shadow-lg"
-            >
-                Generate Code
-            </button>
+            <div className="absolute right-4 top-[51%] flex flex-col z-10 gap-2">
+                {showButtons && (
+                    <>
+                        <button
+                            onClick={generateCode}
+                            className=" bg-white border-solid border-black border rounded py-1 px-2 hover:shadow-md active:shadow-lg"
+                        >
+                            Generate Code
+                        </button>
+                        <textarea
+                            className="w-44 h-12 border border-black p-3 rounded"
+                            value={textValue}
+                            onChange={(e) => setTextValue(e.target.value)}
+                        />
+                        <button
+                            onClick={applyLocalStorage}
+                            className=" bg-white border-solid border-black border rounded py-1 px-2 hover:shadow-md active:shadow-lg"
+                        >
+                            Apply Local Storage
+                        </button>
+                    </>
+                )}
+                <button
+                    onClick={toggleShowButtons}
+                    className=" bg-white border-solid border-black w-12 border rounded py-0 px-1 hover:shadow-md active:shadow-lg"
+                >
+                    {showButtons ? "Hide" : "Show"}
+                </button>
+            </div>
         </>
     );
 }

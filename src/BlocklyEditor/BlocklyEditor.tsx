@@ -30,8 +30,7 @@ export default function BlocklyEditor() {
             sounds={true}
             initialXml={`
 <xml xmlns="http://www.w3.org/1999/xhtml">
-    <block type="lists_create_with" x="140" y="60">
-        <mutation items="3"></mutation>
+    <block type="events_start" x="140" y="60">
     </block>
 </xml>
 `}

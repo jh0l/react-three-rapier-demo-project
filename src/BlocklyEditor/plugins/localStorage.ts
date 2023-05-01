@@ -8,6 +8,10 @@ export const save = function (workspace: Blockly.Workspace) {
     window.localStorage?.setItem(storageKey, JSON.stringify(data));
 };
 
+export const saveString = (str: string) => {
+    window.localStorage?.setItem(storageKey, str);
+};
+
 /** Loads saved state from local storage into the given workspace. */
 export const load = function (
     workspace: Blockly.Workspace,
