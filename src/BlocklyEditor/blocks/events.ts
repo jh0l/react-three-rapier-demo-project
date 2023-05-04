@@ -51,7 +51,7 @@ javascriptGenerator["events_start"] = function (block: Blockly.Block) {
         "STACK",
         javascriptGenerator.ORDER_NONE
     );
-    return `const EVENTS_START = ${array};\n`;
+    return `return () => ${array};\n`;
 };
 
 javascriptGenerator["intersection_type"] = function (block: Blockly.Block) {

@@ -8,8 +8,9 @@ import locale from "blockly/msg/en";
 import "blockly/blocks";
 import "./renderer/zelos_custom";
 import "./plugins/block-plus-minus";
-import "./blocks/events";
 import * as localStorage from "./plugins/localStorage";
+import "./blocks/events";
+import "./blocks/commands_triggers";
 
 Blockly.setLocale(locale);
 
@@ -27,15 +28,13 @@ class ContinuousToolboxFix extends ContinuousToolbox {
 /** inject Blockly workspace into ReactDOM */
 export default function BlocklyComponent(props: Props) {
     const [textValue, setTextValue] = React.useState("");
-    const [showButtons, setShowButtons] = React.useState(false);
+    const [showButtons, setShowButtons] = React.useState(true);
     const blocklyRef = useRef<HTMLDivElement>(null);
     const toolboxRef = useRef<HTMLDivElement>(null);
     const workspcRef = useRef<WorkspaceSvg>();
     const generateCode = () => {
-        console.log(javascriptGenerator.workspaceToCode);
         const code = javascriptGenerator.workspaceToCode(workspcRef.current);
         console.log(code);
-        console.log(workspcRef.current, Blockly);
     };
     const toggleShowButtons = () => setShowButtons(!showButtons);
 
@@ -60,7 +59,13 @@ export default function BlocklyComponent(props: Props) {
 
         localStorage.load(workspcRef.current, initialXml);
 
-        workspcRef.current.addChangeListener(() => {
+        workspcRef.current.addChangeListener((e: any) => {
+            if (
+                "type" in e &&
+                ["viewport_change", "selected", "drag"].includes(e.type)
+            )
+                return;
+
             if (workspcRef.current) {
                 localStorage.save(workspcRef.current);
             }
@@ -118,6 +123,9 @@ type BlocklyTagProps = {
     custom?: string;
     extraState?: any;
     items?: string;
+    deletable?: string;
+    movable?: string;
+    editable?: string;
 };
 const BlocklyTag = (tag: string) => (props: BlocklyTagProps) => {
     const { children, ...rest } = props;
@@ -145,6 +153,51 @@ function BlocklyCategories() {
                 <Block type="lists_length" />
                 <Block type="lists_isEmpty" />
                 <Block type="lists_reverse" />
+            </Category>
+            <Category name="Commands" categorystyle="commands_category">
+                <Block type="commands_task_step" />
+                <Block type="commands_go" />
+                <Block type="commands_trace">
+                    <Value name="NAME">
+                        <Block type="math_number">
+                            <Field name="NUM">1</Field>
+                        </Block>
+                    </Value>
+                </Block>
+                <Block type="commands_blank" />
+                <Block type="commands_stop" />
+                <Block type="commands_drive">
+                    <Value name="angle">
+                        <Block type="math_number">
+                            <Field name="NUM">0</Field>
+                        </Block>
+                    </Value>
+                    <Value name="speed">
+                        <Block type="math_number">
+                            <Field name="NUM">1</Field>
+                        </Block>
+                    </Value>
+                </Block>
+                <Block type="commands_probe">
+                    <Value name="NAME">
+                        <Block type="math_number">
+                            <Field name="NUM">1</Field>
+                        </Block>
+                    </Value>
+                </Block>
+            </Category>
+            <Category name="Triggers" categorystyle="triggers_category">
+                <Block type="triggers_timer">
+                    <Value name="TIME">
+                        <Block type="math_number">
+                            <Field name="NUM">0</Field>
+                        </Block>
+                    </Value>
+                </Block>
+                <Block type="triggers_intersection">
+                    <Field name="NAME">R</Field>
+                </Block>
+                <Block type="triggers_done" />
             </Category>
             <Category
                 name="Functions"

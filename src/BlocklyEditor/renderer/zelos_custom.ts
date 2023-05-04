@@ -37,6 +37,8 @@ Blockly.Theme.defineTheme("zelos_custom", {
     base: Blockly.Themes.Zelos,
     categoryStyles: {
         events_category: { colour: "#CF63CF" },
+        commands_category: { colour: "#FFAB66" },
+        triggers_category: { colour: "#FF7040" },
     },
     blockStyles: {
         event_blocks: {
@@ -44,6 +46,16 @@ Blockly.Theme.defineTheme("zelos_custom", {
             colourSecondary: "#A651A6",
             colourTertiary: "#9C439C",
             hat: "cap",
+        },
+        command_blocks: {
+            colourPrimary: "#EEAB19",
+            colourSecondary: "#CC9900",
+            colourTertiary: "#E6AC00",
+        },
+        trigger_blocks: {
+            colourPrimary: "#FF7040",
+            colourSecondary: "#CC9900",
+            colourTertiary: "#E6AC00",
         },
     },
 });
