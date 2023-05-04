@@ -1,32 +1,56 @@
 # TODO
 
-- [x] Add react blockly support
-- [x] add categories and auto hiding block selection menu
-- [x] improve scrollbars to match examples
-- [x] replace ToolboxDefinition object with JSX children prop of BlocklyEditor
-- [x] make lists and stuff fit into mobile using plus-minus plugin etc
-- [ ] add blockly integration with concurrent-modular-command-list
-  - [x] add local storage usage to save workspace
-  - [x] add 'Start' block
-    - [ ] only code connected to start block is generated to javascript
-    - [ ] start block is always the first block in the workspace
-  - [ ] create block definitions and/or toolbox definitions for all Command and Trigger type functions with necessary number blocks in the number fields prepopulating parameters for functions that need them (e.g trace(speed) vs go())
-    - [ ] add Command, and Trigger category to toolbox with custom colorsr
-    - [ ] provide controls for automatically collapsing 'task step' function blocks (removing 'task step with: ' label when collapsed) + use tick icon for closing 'task step' blocks
-    - [ ]
-  - [ ] create block that takes in a list of strings in input field in toolbox definition and creates a dropdown menu
-          displaying those strings as options (for intersection function etc)
-  - [ ] when Start button is pressed, read in the commands to CommandBarMaker queue
-  - [ ] create a command list from the commands
-  - [ ] create slider block (i.e @blockly/field-slider) for turn angles and speed etc
-  - [ ] make cool little icons for Command and Trigger functions like scratch extensions have (make searchable pop up menu for selecting icon for function like Notion does for Page icons)
-- [ ] move to NextJS
-- [ ] toggle between blockly and 3D Scene being arranged top/bot and lft/rgt depending on whether width > **height**
-- [ ] prevent users from removing an element from create-list plus with minus button if there is a block occupying the field about to be removed
-- [ ] add env-var.production triggered dynamic import of blockly
-- [ ] Add workspace backpack
-- [ ] add continous toolbox & stop blockly block from being deleted when it's placed in the location of the flyout before the flyout was closed
-- [ ] workspace search
-- [ ] add PWA "save to homescreen" support to hide web browser navbar etc
-- [ ] network clients into multiplayer game
-- [ ] add @blockly/plugin-scroll-options
+- [x]  Add react blockly support
+- [x]  add categories and auto hiding block selection menu
+- [x]  improve scrollbars to match examples
+- [x]  replace ToolboxDefinition object with JSX children prop of BlocklyEditor
+- [x]  make lists and stuff fit into mobile using plus-minus plugin etc
+- [ ]  add blockly integration with concurrent-modular-command-list
+  - [x]  add local storage usage to save workspace
+  - [ ]  create block definitions and/or toolbox definitions for all Command and Trigger type functions with necessary number blocks in the number fields prepopulating parameters for functions that need them (e.g trace(speed) vs go())
+    - [ ]  Blocks to create
+      - [ ]  Commands
+        - [x]  go
+        - [x]  trace
+          - [x]  speed
+        - [x]  blank
+        - [x]  align
+        - [x]  stop
+        - [x]  drive
+          - [x]  [degrees, speed]
+        - [x]  probe
+          - [x]  speed
+      - [ ]  Triggers
+        - [x]  timer
+          - [x]  time
+        - [x]  intersection
+          - [x]  dropdown
+        - [x]  “done”
+      - [ ]  Task Step - Command/Array field, trigger field
+      - [ ]  add default number blocks as inputs for
+        - [x]  trace
+        - [x]  timer
+        - [x]  drive
+        - [x]  probe
+      - [ ]  add maximums, minimums, angles for
+        - [ ]  trace, timer, drive, probe
+      - [ ]  create image option icons for intersection trigger R, L, T, I, W dropdown
+    - [ ]  provide controls for automatically collapsing ‘task step’ blocks (removing ‘task step with:’ label when collapsed) + use tick icon for closing ‘task step’ blocks
+    - [ ]  add Command, and Trigger category to toolbox with custom colors
+    - [ ]  add comments next to Command and Trigger block in Toolbox explaining what each block does and what its parameters mean
+  - [x]  add ‘Start’ block
+    - [x]  start block is always the first block in the workspace
+    - [ ]  only code connected to start block is generated to javascript
+    - [ ]  when Start button is pressed, read in the commands to CommandBarMaker queue
+  - [ ]  create slider block (i.e @blockly/field-slider) for turn angles and speed etc
+  - [ ]  make cool little icons for Command and Trigger functions like scratch extensions have (make searchable pop up menu for selecting icon for function like Notion does for Page icons)
+- [ ]  move to NextJS
+- [ ]  toggle between blockly and 3D Scene being arranged top/bot and lft/rgt depending on whether width > **height**
+- [ ]  prevent users from removing an element from create-list plus with minus button if there is a block occupying the field about to be removed
+- [ ]  add env-var.production triggered dynamic import of blockly
+- [ ]  Add workspace backpack
+- [ ]  add continous toolbox & stop blockly block from being deleted when it’s placed in the location of the flyout before the flyout was closed
+- [ ]  workspace search
+- [ ]  add PWA “save to homescreen” support to hide web browser navbar etc
+- [ ]  network clients into multiplayer game
+- [ ]  add @blockly/plugin-scroll-options
