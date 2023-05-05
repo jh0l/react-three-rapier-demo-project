@@ -1,10 +1,10 @@
 import { RefObject, useEffect, useState } from "react";
-import { CanvasRes } from "./useCanvasMap";
 import { useFrame } from "@react-three/fiber";
 import { useAppStore } from "../../../App";
 import AutoTraceVehicle from "./autoTraceVehicle";
 import { CONTROL_VALUES } from "../components/OnScreenControls/OnScreenControls";
 import { useJitRef } from "../../../utils";
+import { CanvasRes } from "../../../lib/commandlib";
 
 export interface ControlState {
     auto: boolean;
@@ -21,7 +21,6 @@ export function useControls(canvasRef: RefObject<CanvasRes>) {
         () => new AutoTraceVehicle(canvasRef.current!)
     );
     const { paused } = useAppStore();
-
     useKeyboard(ref, stateArr);
     useFrame((_, delta) => {
         const { auto } = state;

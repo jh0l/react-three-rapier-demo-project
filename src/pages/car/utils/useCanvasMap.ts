@@ -2,43 +2,7 @@ import * as THREE from "three";
 import { RefObject, useEffect, useState } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useJitRef } from "../../../utils";
-
-class Luminance {
-    top = 0;
-    lft = 0;
-    bot = 0;
-    rgt = 0;
-    set(value: number, side: string | number) {
-        value = Math.trunc(value * 100) / 100;
-        if (side === "top" || side === 0) this.top = value;
-        else if (side === "lft" || side === 1) this.lft = value;
-        else if (side === "bot" || side === 2) this.bot = value;
-        else if (side === "rgt" || side === 3) this.rgt = value;
-        else console.warn("unknown side", side);
-    }
-    get(number: number): number {
-        if (number === 0) return this.top;
-        if (number === 1) return this.lft;
-        if (number === 2) return this.bot;
-        if (number === 3) return this.rgt;
-        return NaN;
-    }
-    map<T>(fn: (x: number) => T): T[] {
-        return [fn(this.top), fn(this.lft), fn(this.bot), fn(this.rgt)];
-    }
-    keys() {
-        return { top: this.top, lft: this.lft, bot: this.bot, rgt: this.rgt };
-    }
-}
-export interface CanvasRes {
-    canvas: CanvasRenderingContext2D | null;
-    luminance: Luminance;
-    maps?: {
-        x: (x: number) => number;
-        y: (y: number) => number;
-    };
-    vectors: number[][];
-}
+import { CanvasRes, Luminance } from "../../../lib/commandlib";
 
 type FloatyBoxesType = React.MutableRefObject<
     RefObject<

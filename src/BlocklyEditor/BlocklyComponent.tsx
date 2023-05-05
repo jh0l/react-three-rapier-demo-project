@@ -11,6 +11,7 @@ import "./plugins/block-plus-minus";
 import * as localStorage from "./plugins/localStorage";
 import "./blocks/events";
 import "./blocks/commands_triggers";
+import { useCommandQueue, useCommandStore } from "../app_state/useCommandStore";
 
 Blockly.setLocale(locale);
 
@@ -27,15 +28,16 @@ class ContinuousToolboxFix extends ContinuousToolbox {
 
 /** inject Blockly workspace into ReactDOM */
 export default function BlocklyComponent(props: Props) {
+    const { setWorkspace } = useCommandStore();
     const [textValue, setTextValue] = React.useState("");
     const [showButtons, setShowButtons] = React.useState(true);
     const blocklyRef = useRef<HTMLDivElement>(null);
     const toolboxRef = useRef<HTMLDivElement>(null);
     const workspcRef = useRef<WorkspaceSvg>();
-    const generateCode = () => {
-        const code = javascriptGenerator.workspaceToCode(workspcRef.current);
-        console.log(code);
-    };
+    // const generateCode = () => {
+    //     const fn = evalCode();
+    //     console.log(fn());
+    // };
     const toggleShowButtons = () => setShowButtons(!showButtons);
 
     const applyLocalStorage = () => {
@@ -71,6 +73,8 @@ export default function BlocklyComponent(props: Props) {
             }
         });
 
+        setWorkspace(workspcRef.current);
+
         return () => {
             workspcRef.current?.dispose();
         };
@@ -84,12 +88,12 @@ export default function BlocklyComponent(props: Props) {
             <div className="absolute right-4 top-[51%] flex flex-col z-10 gap-2">
                 {showButtons && (
                     <>
-                        <button
+                        {/* <button
                             onClick={generateCode}
                             className=" bg-white border-solid border-black border rounded py-1 px-2 hover:shadow-md active:shadow-lg"
                         >
                             Generate Code
-                        </button>
+                        </button> */}
                         <textarea
                             className="w-44 h-12 border border-black p-3 rounded"
                             value={textValue}

@@ -12,11 +12,13 @@ import {
 } from "@react-three/rapier";
 import { RefObject, createRef, useEffect, useRef, useState } from "react";
 import { useControls } from "./utils/useControls";
-import { CanvasRes, useCanvasMap } from "./utils/useCanvasMap";
+import { useCanvasMap } from "./utils/useCanvasMap";
 import * as THREE from "three";
 import AutoTraceVehicle from "./utils/autoTraceVehicle";
 import { useAppStore } from "../../App";
 import { useJitRef } from "../../utils";
+import { CanvasRes } from "../../lib/commandlib";
+import { useCommandQueue } from "../../app_state/useCommandStore";
 
 export const WheelJoint = ({
     body,
@@ -142,8 +144,19 @@ export function CarEntity({
         wheelPositions.map(() => createRef<RapierRigidBody>())
     );
     const [canvasRef] = useCanvasMap(floatyBoxesRef);
-    const [ctrlRef, [{ auto }, setCtrlState]] = useControls(canvasRef);
-    const handleStart = () => setCtrlState({ auto: true });
+    const [autoRef, [{ auto }, setCtrlState]] = useControls(canvasRef);
+    const evalCommands = useCommandQueue();
+    const handleStart = () => {
+        if (autoRef.current) {
+            const queue = evalCommands()();
+            if (queue) {
+                autoRef.current.setCommandQueue(queue);
+                setCtrlState({ auto: true });
+            } else {
+                alert("evalCommands is null! (no workspace?)");
+            }
+        }
+    };
     useFrame(() => {
         const parentBox = floatyBoxesRef.current[0].current;
         if (!floatBoxesColorRef.current || !bodyRef.current || !parentBox)
@@ -157,7 +170,7 @@ export function CarEntity({
         }
         if (
             canvasRef.current.luminance.get(0) &&
-            ctrlRef.current.state.sample
+            autoRef.current.state.sample
         ) {
             const v = canvasRef.current.luminance;
             console.log(v);
@@ -195,10 +208,10 @@ export function CarEntity({
                         <PerspectiveCamera position={[0, 0, 10]} />
                     </group>
                     <Html>
-                        {canvasRef.current && ctrlRef.current && (
+                        {canvasRef.current && autoRef.current && (
                             <Readout
                                 canvasRef={canvasRef.current}
-                                controlRef={ctrlRef.current}
+                                controlRef={autoRef.current}
                                 bodyRef={bodyRef}
                             />
                         )}
@@ -291,7 +304,7 @@ export function CarEntity({
                     bodyAnchor={wheelPosition}
                     wheelAnchor={[0, 0, 0]}
                     rotationAxis={[0, 0, 1]}
-                    controls={ctrlRef}
+                    controls={autoRef}
                     side={indexSides[index]}
                 />
             ))}
@@ -327,7 +340,7 @@ export function CarEntity({
                 bodyAnchor={pokeyPosition}
                 pokeyAnchor={[0, 0, 0]}
                 tranAxis={[0, 1, 0]}
-                ctrl={ctrlRef}
+                ctrl={autoRef}
             />
         </group>
     );

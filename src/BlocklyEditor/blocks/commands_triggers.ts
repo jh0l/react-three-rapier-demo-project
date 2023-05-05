@@ -209,7 +209,7 @@ javascriptGenerator["commands_task_step"] = function (block: Blockly.Block) {
         javascriptGenerator.ORDER_ATOMIC
     );
     // TODO: Assemble JavaScript into code variable.
-    var code = `\n[${value_command}, ${value_trigger}]`;
+    var code = `[${value_command}, ${value_trigger}]`;
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, javascriptGenerator.ORDER_ATOMIC];
 };
@@ -292,8 +292,10 @@ javascriptGenerator["commands_drive"] = function (block: Blockly.Block) {
         "speed",
         javascriptGenerator.ORDER_ATOMIC
     );
+
     // TODO: Assemble JavaScript into code variable.
-    var code = `drive(${value_angle}, ${value_speed})`;
+    // surround angle and speed in [] because CommandMakerMaker param allows 1 argument only
+    var code = `drive([${value_angle}, ${value_speed}])`;
     // TODO: Change ORDER_NONE to the correct strength.
     return [code, javascriptGenerator.ORDER_ATOMIC];
 };
