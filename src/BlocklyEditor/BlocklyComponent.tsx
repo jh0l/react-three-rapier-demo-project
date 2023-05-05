@@ -3,7 +3,6 @@ import React, { useEffect, useRef } from "react";
 import Blockly, { WorkspaceSvg } from "blockly/core";
 import { ContinuousToolbox } from "@blockly/continuous-toolbox";
 
-import { javascriptGenerator } from "blockly/javascript";
 import locale from "blockly/msg/en";
 import "blockly/blocks";
 import "./renderer/zelos_custom";
@@ -11,7 +10,7 @@ import "./plugins/block-plus-minus";
 import * as localStorage from "./plugins/localStorage";
 import "./blocks/events";
 import "./blocks/commands_triggers";
-import { useCommandQueue, useCommandStore } from "../app_state/useCommandStore";
+import { useCommandStore } from "../app_state/useCommandStore";
 
 Blockly.setLocale(locale);
 
