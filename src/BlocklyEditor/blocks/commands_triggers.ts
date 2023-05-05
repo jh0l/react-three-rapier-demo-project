@@ -164,7 +164,7 @@ const defs = [
             },
         ],
         inputsInline: true,
-        output: "commmand",
+        output: "command",
         style: "command_blocks",
         tooltip: "",
         helpUrl: "",
