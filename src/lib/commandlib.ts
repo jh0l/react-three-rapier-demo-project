@@ -36,7 +36,7 @@ export interface CanvasRes {
     };
     vectors: number[][];
 }
-
+const PROBE_LIMIT = 1000;
 export class CommandParam {
     _drive: [number, number];
     _probe: [number, number];
@@ -61,17 +61,21 @@ export class CommandParam {
         return this._probe[axis === "Y" ? 0 : 1];
     }
     probe(y?: number, x?: number) {
-        if (y !== undefined) this._probe[0] = y;
-        if (x !== undefined) this._probe[1] = x;
+        if (y !== undefined) this._probe[0] = this.clean(y, PROBE_LIMIT);
+        if (x !== undefined) this._probe[1] = this.clean(x, PROBE_LIMIT);
         return this;
     }
     addProbe(y?: number, x?: number) {
-        if (y !== undefined) this._probe[0] += y;
-        if (x !== undefined) this._probe[1] += x;
+        if (y !== undefined)
+            this._probe[0] = this.clean(this._probe[0] + y, PROBE_LIMIT);
+        if (x !== undefined)
+            this._probe[1] = this.clean(this._probe[1] + x, PROBE_LIMIT);
         return this;
     }
-    clean(x: number): number {
-        return Math.max(-1, Math.min(1, Math.trunc(x * 100) / 100)) || 0;
+    clean(x: number, limit = 1): number {
+        return (
+            Math.max(-limit, Math.min(limit, Math.trunc(x * 100) / 100)) || 0
+        );
     }
 }
 
