@@ -66,6 +66,7 @@ const defs = [
                     ["Left", "L"],
                     ["Top", "T"],
                     ["Horizontal", "I"],
+                    ["White", "W"],
                 ],
             },
         ],
